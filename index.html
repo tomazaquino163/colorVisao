@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ColorVisão - Projeto escolar educativo sobre percepção de cores e daltonismo.">
+  <title>ColorVisão | Teste Educativo de Percepção de Cores</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="topo">
+    <div class="container nav">
+      <a class="marca" href="#inicio">
+        <span class="logo">CV</span>
+        <span>ColorVisão</span>
+      </a>
+
+      <nav>
+        <a href="#inicio">Início</a>
+        <a href="#sobre">Sobre</a>
+        <a href="#teste">Teste</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section id="inicio" class="hero">
+      <div class="container hero-grid">
+        <div class="hero-texto">
+          <span class="etiqueta">Projeto escolar • Ciência + Tecnologia + Inclusão</span>
+          <h1>Como você percebe as <span>cores?</span></h1>
+          <p>
+            O ColorVisão é uma plataforma educativa que apresenta atividades
+            interativas de percepção de cores e conscientiza sobre acessibilidade visual.
+          </p>
+
+          <div class="acoes">
+            <button class="btn principal" id="btnComecar">Iniciar teste</button>
+            <a class="btn secundario" href="#sobre">Conhecer o projeto</a>
+          </div>
+
+          <div class="aviso">
+            <strong>Importante:</strong>
+            este projeto possui finalidade educativa e não substitui avaliação de um profissional da visão.
+          </div>
+        </div>
+
+        <div class="hero-card">
+          <div class="mini-placa" aria-hidden="true">
+            <span>8</span>
+          </div>
+          <div class="hero-card-info">
+            <strong>Teste interativo</strong>
+            <p>Imagens são montadas dinamicamente no navegador.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sobre" class="secao">
+      <div class="container">
+        <div class="titulo-secao">
+          <span>Sobre</span>
+          <h2>Por que falar sobre percepção de cores?</h2>
+          <p>
+            Algumas pessoas percebem determinadas combinações de cores de maneira diferente.
+            Em gráficos, mapas, atividades e sinalizações, depender somente da cor pode dificultar
+            o acesso à informação.
+          </p>
+        </div>
+
+        <div class="cards">
+          <article class="card">
+            <div class="icone">👁️</div>
+            <h3>Percepção</h3>
+            <p>Atividades simples ajudam a observar diferenças na percepção de cores.</p>
+          </article>
+
+          <article class="card">
+            <div class="icone">🧪</div>
+            <h3>Ciência</h3>
+            <p>O projeto aborda visão, retina, cones e alterações na percepção cromática.</p>
+          </article>
+
+          <article class="card">
+            <div class="icone">♿</div>
+            <h3>Acessibilidade</h3>
+            <p>Informações importantes não devem depender exclusivamente de cores.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="teste" class="secao teste-secao">
+      <div class="container">
+        <div class="titulo-secao">
+          <span>Experimento</span>
+          <h2>Teste educativo de percepção de cores</h2>
+          <p id="instrucao">
+            Clique em “Iniciar teste” para gerar a primeira placa.
+          </p>
+        </div>
+
+        <div class="painel-teste">
+          <div class="progresso">
+            <div>
+              <strong>Questão</strong>
+              <span id="numeroQuestao">0 / 5</span>
+            </div>
+            <div class="barra">
+              <div id="barraProgresso"></div>
+            </div>
+          </div>
+
+          <div class="canvas-area">
+            <canvas id="placa" width="500" height="500" aria-label="Placa de percepção de cores"></canvas>
+          </div>
+
+          <div id="areaResposta" class="area-resposta oculto">
+            <label for="resposta">Qual número você consegue identificar?</label>
+            <div class="resposta-linha">
+              <input
+                type="number"
+                id="resposta"
+                inputmode="numeric"
+                min="0"
+                max="99"
+                placeholder="Digite o número"
+              >
+              <button class="btn principal" id="btnResponder">Responder</button>
+            </div>
+
+            <button class="btn-link" id="btnNaoVejo">Não consigo identificar</button>
+          </div>
+
+          <div id="resultado" class="resultado oculto"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <strong>ColorVisão</strong>
+      <p>Projeto escolar educativo sobre percepção de cores e acessibilidade.</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
