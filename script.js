@@ -1,3 +1,4 @@
+
 const canvas = document.getElementById("placa");
 const ctx = canvas.getContext("2d");
 
@@ -10,225 +11,512 @@ const resultado = document.getElementById("resultado");
 const numeroQuestao = document.getElementById("numeroQuestao");
 const barraProgresso = document.getElementById("barraProgresso");
 const instrucao = document.getElementById("instrucao");
+const temaToggle = document.getElementById("temaToggle");
+const temaIcone = document.getElementById("temaIcone");
+const temaTexto = document.getElementById("temaTexto");
+const feiraToggle = document.getElementById("feiraToggle");
 
-const TOTAL_QUESTOES = 5;
-
-let questaoAtual = 0;
-let acertos = 0;
-let respostaCorreta = null;
-
-const paletas = [
-  {
-    fundo: ["#d9a86c", "#c7b46d", "#b99566", "#d2bd80", "#a9a66c"],
-    figura: ["#7e9560", "#889a61", "#78905b", "#91a46a"]
-  },
-  {
-    fundo: ["#d7b17d", "#c69b6a", "#b68b61", "#e0bd89", "#c5a56f"],
-    figura: ["#81935d", "#738b57", "#8b9c62", "#76905c"]
-  },
-  {
-    fundo: ["#d5b976", "#c89f69", "#b98d65", "#dab283", "#caa970"],
-    figura: ["#7c8f5e", "#849966", "#6f8659", "#90a16c"]
-  }
+const PLANO = [
+  ...Array(2).fill("controle"),
+  ...Array(4).fill("vermelho-verde"),
+  ...Array(3).fill("azul-amarelo"),
+  ...Array(3).fill("tons")
 ];
 
-function numeroAleatorio(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+const TOTAL_QUESTOES = PLANO.length;
+
+let questaoAtual = 0;
+let numeroAtual = null;
+let numerosUsados = new Set();
+let perguntas = [];
+let respostas = [];
+let pontos = [];
+let mascara = null;
+let animationId = null;
+let inicioQuestao = 0;
+let modoFeira = false;
+
+const paletas = {
+  controle: {
+    fundo: ["#d5b56f", "#c9a46b", "#dfc17e", "#b99a64", "#d2ad73"],
+    figura: ["#496d70", "#557b78", "#3f6468", "#638582"]
+  },
+  "vermelho-verde": {
+    fundo: ["#b6a05e", "#c0aa68", "#aa9659", "#c7b06d", "#b09b62"],
+    figura: ["#a65f55", "#b16a5c", "#9b5c50", "#ad6558", "#a25e54"]
+  },
+  "azul-amarelo": {
+    fundo: ["#c5a95d", "#d0b66c", "#b99d55", "#d7bd72", "#c0a45c"],
+    figura: ["#587b93", "#63859c", "#4e718a", "#6b8ca0", "#55778e"]
+  },
+  tons: {
+    fundo: ["#b99c72", "#c0a47a", "#ad926c", "#c6aa80", "#b29770"],
+    figura: ["#8c796b", "#917e70", "#857367", "#998476", "#8a776a"]
+  }
+};
+
+function embaralhar(lista) {
+  const copia = [...lista];
+  for (let i = copia.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copia[i], copia[j]] = [copia[j], copia[i]];
+  }
+  return copia;
 }
 
-function corAleatoria(lista) {
+function gerarNumeroUnico() {
+  let n;
+  do {
+    n = Math.floor(Math.random() * 98) + 1;
+  } while (numerosUsados.has(n));
+  numerosUsados.add(n);
+  return n;
+}
+
+function criarMascara(numero) {
+  const off = document.createElement("canvas");
+  off.width = canvas.width;
+  off.height = canvas.height;
+  const mctx = off.getContext("2d");
+
+  mctx.clearRect(0, 0, off.width, off.height);
+  mctx.fillStyle = "#fff";
+  mctx.textAlign = "center";
+  mctx.textBaseline = "middle";
+
+  // Números de dois dígitos precisam ser menores para manter contorno limpo.
+  const tamanho = numero < 10 ? 245 : 205;
+  mctx.font = `900 ${tamanho}px Arial, Helvetica, sans-serif`;
+  mctx.fillText(String(numero), off.width / 2, off.height / 2 + 6);
+
+  return mctx.getImageData(0, 0, off.width, off.height);
+}
+
+function estaNaMascara(x, y) {
+  const px = Math.max(0, Math.min(canvas.width - 1, Math.round(x)));
+  const py = Math.max(0, Math.min(canvas.height - 1, Math.round(y)));
+  return mascara.data[(py * canvas.width + px) * 4 + 3] > 80;
+}
+
+function dentroPlaca(x, y, margem = 0) {
+  return Math.hypot(x - 250, y - 250) < 230 - margem;
+}
+
+function escolherCor(lista) {
   return lista[Math.floor(Math.random() * lista.length)];
 }
 
-function dentroDoCirculo(x, y, cx, cy, raio) {
-  return Math.hypot(x - cx, y - cy) <= raio;
+function criarPonto(x, y, grupo, paleta, tamanhoMin, tamanhoMax) {
+  pontos.push({
+    baseX: x,
+    baseY: y,
+    grupo,
+    raio: tamanhoMin + Math.random() * (tamanhoMax - tamanhoMin),
+    cor: escolherCor(grupo === "figura" ? paleta.figura : paleta.fundo),
+    faseX: Math.random() * Math.PI * 2,
+    faseY: Math.random() * Math.PI * 2,
+    velocidade: 0.00065 + Math.random() * 0.00055,
+    amplitude: 0.7 + Math.random() * 1.6
+  });
 }
 
-function gerarMascaraNumero(numero) {
-  const mascara = document.createElement("canvas");
-  mascara.width = canvas.width;
-  mascara.height = canvas.height;
+function gerarPontos(categoria) {
+  pontos = [];
+  const paleta = paletas[categoria];
 
-  const mctx = mascara.getContext("2d");
+  // Grade com jitter: cobre muito melhor a placa que pontos puramente aleatórios.
+  const passo = 13;
+  for (let y = 28; y < 472; y += passo) {
+    for (let x = 28; x < 472; x += passo) {
+      const jx = x + (Math.random() - 0.5) * 8;
+      const jy = y + (Math.random() - 0.5) * 8;
+      if (!dentroPlaca(jx, jy, 7)) continue;
 
-  mctx.clearRect(0, 0, mascara.width, mascara.height);
-  mctx.fillStyle = "#ffffff";
-  mctx.textAlign = "center";
-  mctx.textBaseline = "middle";
-  mctx.font = "900 250px Arial, sans-serif";
-  mctx.fillText(String(numero), mascara.width / 2, mascara.height / 2 + 8);
+      const grupo = estaNaMascara(jx, jy) ? "figura" : "fundo";
+      criarPonto(jx, jy, grupo, paleta, 4.8, 7.2);
+    }
+  }
 
-  return mctx.getImageData(0, 0, mascara.width, mascara.height);
+  // Reforço proposital dentro do número para deixar a silhueta contínua.
+  let adicionados = 0;
+  let tentativas = 0;
+  while (adicionados < 430 && tentativas < 12000) {
+    tentativas++;
+    const x = 90 + Math.random() * 320;
+    const y = 105 + Math.random() * 290;
+    if (dentroPlaca(x, y, 6) && estaNaMascara(x, y)) {
+      criarPonto(x, y, "figura", paleta, 3.8, 6.3);
+      adicionados++;
+    }
+  }
 }
 
-function pontoEstaNaFigura(mascara, x, y) {
-  const px = Math.max(0, Math.min(canvas.width - 1, Math.round(x)));
-  const py = Math.max(0, Math.min(canvas.height - 1, Math.round(y)));
-  const indice = (py * canvas.width + px) * 4 + 3;
-  return mascara.data[indice] > 60;
+function gerarQuestao() {
+  numeroAtual = gerarNumeroUnico();
+  const categoria = perguntas[questaoAtual].categoria;
+  mascara = criarMascara(numeroAtual);
+  gerarPontos(categoria);
+  perguntas[questaoAtual].numero = numeroAtual;
+  inicioQuestao = performance.now();
 }
 
-function gerarPlaca() {
-  const paleta = paletas[Math.floor(Math.random() * paletas.length)];
-
-  respostaCorreta = numeroAleatorio(2, 9);
-  const mascara = gerarMascaraNumero(respostaCorreta);
-
+function desenharPlacaAnimada(tempo) {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   ctx.save();
   ctx.beginPath();
-  ctx.arc(250, 250, 238, 0, Math.PI * 2);
+  ctx.arc(250, 250, 239, 0, Math.PI * 2);
   ctx.clip();
 
-  ctx.fillStyle = "#d8bd83";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#d4b879";
+  ctx.fillRect(0, 0, 500, 500);
 
-  let criados = 0;
-  let tentativas = 0;
-  const maxPontos = 560;
+  for (const p of pontos) {
+    let dx = Math.sin(tempo * p.velocidade + p.faseX) * p.amplitude;
+    let dy = Math.cos(tempo * (p.velocidade * 0.91) + p.faseY) * p.amplitude;
 
-  while (criados < maxPontos && tentativas < 5000) {
-    tentativas++;
+    // O movimento é pequeno para preservar a máscara.
+    let x = p.baseX + dx;
+    let y = p.baseY + dy;
 
-    const raio = numeroAleatorio(5, 13);
-    const x = numeroAleatorio(18, canvas.width - 18);
-    const y = numeroAleatorio(18, canvas.height - 18);
-
-    if (!dentroDoCirculo(x, y, 250, 250, 228 - raio)) {
-      continue;
+    // Se o movimento atravessar a fronteira do número, mantém a posição base.
+    if (estaNaMascara(x, y) !== (p.grupo === "figura")) {
+      x = p.baseX;
+      y = p.baseY;
     }
 
-    const pertence = pontoEstaNaFigura(mascara, x, y);
-
     ctx.beginPath();
-    ctx.arc(x, y, raio, 0, Math.PI * 2);
-    ctx.fillStyle = pertence ? corAleatoria(paleta.figura) : corAleatoria(paleta.fundo);
+    ctx.arc(x, y, p.raio, 0, Math.PI * 2);
+    ctx.fillStyle = p.cor;
     ctx.fill();
 
     ctx.globalAlpha = 0.12;
-    ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 0.8;
     ctx.stroke();
     ctx.globalAlpha = 1;
-
-    criados++;
   }
 
   ctx.restore();
 
   ctx.beginPath();
   ctx.arc(250, 250, 239, 0, Math.PI * 2);
-  ctx.strokeStyle = "rgba(255,255,255,.18)";
+  ctx.strokeStyle = "rgba(255,255,255,.25)";
   ctx.lineWidth = 4;
   ctx.stroke();
+
+  animationId = requestAnimationFrame(desenharPlacaAnimada);
 }
 
 function iniciarTeste() {
-  questaoAtual = 1;
-  acertos = 0;
+  if (animationId) cancelAnimationFrame(animationId);
+
+  questaoAtual = 0;
+  numerosUsados = new Set();
+  respostas = [];
+  perguntas = embaralhar(PLANO).map(categoria => ({ categoria, numero: null }));
 
   resultado.classList.add("oculto");
   areaResposta.classList.remove("oculto");
-
-  atualizarProgresso();
-  gerarPlaca();
-
   respostaInput.value = "";
-  respostaInput.focus();
 
   instrucao.textContent =
-    "Observe a placa e informe o número que você consegue identificar.";
+    "Observe a placa animada e informe o número que você consegue identificar.";
+  atualizarProgresso();
+  gerarQuestao();
 
-  document.getElementById("teste").scrollIntoView({ behavior: "smooth" });
+  animationId = requestAnimationFrame(desenharPlacaAnimada);
+  const secaoTeste = document.getElementById("teste");
+
+  // Mantém o título "Teste educativo de percepção de cores" visível.
+  // O deslocamento considera o cabeçalho fixo e deixa uma margem confortável.
+  const topoDesejado =
+    secaoTeste.getBoundingClientRect().top + window.scrollY - 28;
+
+  window.scrollTo({
+    top: Math.max(0, topoDesejado),
+    behavior: "smooth"
+  });
+
+  setTimeout(() => respostaInput.focus({ preventScroll: true }), 650);
 }
 
 function atualizarProgresso() {
-  numeroQuestao.textContent = `${questaoAtual} / ${TOTAL_QUESTOES}`;
-  barraProgresso.style.width = `${(questaoAtual / TOTAL_QUESTOES) * 100}%`;
+  numeroQuestao.textContent = `${questaoAtual + 1} / ${TOTAL_QUESTOES}`;
+  barraProgresso.style.width = `${((questaoAtual + 1) / TOTAL_QUESTOES) * 100}%`;
 }
 
 function registrarResposta(valor) {
-  if (questaoAtual === 0) return;
+  if (!perguntas.length || questaoAtual >= perguntas.length) return;
 
-  if (Number(valor) === respostaCorreta) {
-    acertos++;
-  }
+  const respostaNum = valor === null || valor === "" ? null : Number(valor);
+  const q = perguntas[questaoAtual];
 
-  if (questaoAtual < TOTAL_QUESTOES) {
+  respostas.push({
+    categoria: q.categoria,
+    esperado: q.numero,
+    informado: respostaNum,
+    correto: respostaNum === q.numero,
+    tempoMs: Math.round(performance.now() - inicioQuestao)
+  });
+
+  if (questaoAtual < TOTAL_QUESTOES - 1) {
     questaoAtual++;
-    atualizarProgresso();
-    gerarPlaca();
     respostaInput.value = "";
+    atualizarProgresso();
+    gerarQuestao();
     respostaInput.focus();
   } else {
     finalizarTeste();
   }
 }
 
+function resumoCategoria(categoria) {
+  const itens = respostas.filter(r => r.categoria === categoria);
+  return {
+    total: itens.length,
+    acertos: itens.filter(r => r.correto).length
+  };
+}
+
+function tempoMedioCategoria(categoria) {
+  const itens = respostas.filter(r => r.categoria === categoria);
+  if (!itens.length) return 0;
+  return itens.reduce((soma, r) => soma + r.tempoMs, 0) / itens.length / 1000;
+}
+
+function linhaResultado(titulo, categoria) {
+  const r = resumoCategoria(categoria);
+  const pct = r.total ? Math.round((r.acertos / r.total) * 100) : 0;
+  const tempo = tempoMedioCategoria(categoria).toFixed(1).replace(".", ",");
+
+  return `
+    <div class="resultado-grupo">
+      <div class="resultado-grupo-topo">
+        <strong>${titulo}</strong>
+        <span>${r.acertos}/${r.total} • ${pct}%</span>
+      </div>
+      <div class="resultado-barra">
+        <div class="resultado-barra-preenchimento" style="width:${pct}%"></div>
+      </div>
+      <small>Tempo médio de resposta: ${tempo} s</small>
+    </div>
+  `;
+}
+
+function percentualCategoria(categoria) {
+  const r = resumoCategoria(categoria);
+  return r.total ? (r.acertos / r.total) * 100 : 0;
+}
+
+function gerarConclusao() {
+  const controle = percentualCategoria("controle");
+  const vermelhoVerde = percentualCategoria("vermelho-verde");
+  const azulAmarelo = percentualCategoria("azul-amarelo");
+  const tons = percentualCategoria("tons");
+
+  // Se até as placas de controle apresentarem dificuldade,
+  // evitamos interpretar o resultado cromático.
+  if (controle < 100) {
+    return {
+      classe: "status-inconclusivo",
+      icone: "?",
+      titulo: "Resultado inconclusivo",
+      texto:
+        "Houve dificuldade também nas placas de controle. Recomendamos repetir o teste verificando brilho, iluminação, filtros de cor da tela e se as instruções foram compreendidas."
+    };
+  }
+
+  const grupos = [
+    { nome: "vermelho-verde", valor: vermelhoVerde },
+    { nome: "azul-amarelo", valor: azulAmarelo },
+    { nome: "distinção de tonalidades", valor: tons }
+  ];
+
+  const mediaCromatica =
+    (vermelhoVerde * 4 + azulAmarelo * 3 + tons * 3) / 10;
+
+  const pior = [...grupos].sort((a, b) => a.valor - b.valor)[0];
+
+  if (mediaCromatica >= 80 && pior.valor >= 67) {
+    return {
+      classe: "status-verde",
+      icone: "✓",
+      titulo: "Percepção de cores dentro do esperado",
+      texto:
+        "Seu desempenho foi alto nas combinações avaliadas e não houve dificuldade relevante nos grupos apresentados."
+    };
+  }
+
+  if (mediaCromatica >= 55) {
+    return {
+      classe: "status-amarelo",
+      icone: "!",
+      titulo: "Possível dificuldade na percepção de cores",
+      texto:
+        `Foram observadas algumas dificuldades, principalmente no grupo ${pior.nome}. Vale repetir o teste em boas condições de tela e iluminação.`
+    };
+  }
+
+  let detalhe;
+  if (vermelhoVerde < 55 && azulAmarelo < 55) {
+    detalhe = "As dificuldades apareceram em diferentes grupos de cores.";
+  } else if (vermelhoVerde <= azulAmarelo && vermelhoVerde <= tons) {
+    detalhe = "A maior dificuldade foi observada no grupo vermelho-verde.";
+  } else if (azulAmarelo <= vermelhoVerde && azulAmarelo <= tons) {
+    detalhe = "A maior dificuldade foi observada no grupo azul-amarelo.";
+  } else {
+    detalhe = "A maior dificuldade foi observada na distinção de tonalidades.";
+  }
+
+  return {
+    classe: "status-vermelho",
+    icone: "!",
+    titulo: "Dificuldade significativa na percepção de cores",
+    texto:
+      `${detalhe} Este resultado não confirma daltonismo, mas uma dificuldade semelhante no cotidiano pode justificar avaliação por um profissional da visão.`
+  };
+}
+
+function explicacaoMaiorDificuldade() {
+  const grupos = [
+    { categoria: "vermelho-verde", nome: "Vermelho-verde", valor: percentualCategoria("vermelho-verde") },
+    { categoria: "azul-amarelo", nome: "Azul-amarelo", valor: percentualCategoria("azul-amarelo") },
+    { categoria: "tons", nome: "Tonalidades", valor: percentualCategoria("tons") }
+  ];
+
+  const pior = grupos.sort((a, b) => a.valor - b.valor)[0];
+
+  const textos = {
+    "vermelho-verde":
+      "Este grupo utiliza combinações destinadas a explorar diferenças de percepção entre tons próximos das famílias vermelho-verde. Dificuldades aqui não determinam um tipo específico de daltonismo.",
+    "azul-amarelo":
+      "Este grupo explora combinações relacionadas à distinção entre tons das famílias azul-amarelo. Alterações nesse eixo são menos comuns e um teste digital não fornece diagnóstico.",
+    "tons":
+      "Este grupo avalia a capacidade de separar tonalidades próximas. Brilho, contraste e qualidade da tela podem influenciar bastante esse resultado."
+  };
+
+  return `
+    <div class="explicacao-resultado">
+      <span>ANÁLISE DO TESTE</span>
+      <h4>Grupo com maior dificuldade: ${pior.nome}</h4>
+      <p>${textos[pior.categoria]}</p>
+    </div>
+  `;
+}
+
 function finalizarTeste() {
+  if (animationId) cancelAnimationFrame(animationId);
+  animationId = null;
+
   areaResposta.classList.add("oculto");
   resultado.classList.remove("oculto");
-
   numeroQuestao.textContent = `${TOTAL_QUESTOES} / ${TOTAL_QUESTOES}`;
   barraProgresso.style.width = "100%";
 
-  const percentual = Math.round((acertos / TOTAL_QUESTOES) * 100);
-
-  let mensagem = "";
-
-  if (acertos === TOTAL_QUESTOES) {
-    mensagem =
-      "Você identificou todas as placas desta demonstração.";
-  } else if (acertos >= 3) {
-    mensagem =
-      "Você identificou a maior parte das placas, mas apresentou dificuldade em algumas combinações.";
-  } else {
-    mensagem =
-      "Você apresentou dificuldade em várias placas desta demonstração.";
-  }
+  const conclusao = gerarConclusao();
 
   resultado.innerHTML = `
-    <h3>Resultado da demonstração</h3>
-    <p><strong>${acertos} de ${TOTAL_QUESTOES}</strong> respostas identificadas corretamente (${percentual}%).</p>
-    <p>${mensagem}</p>
+    <h3>Resultado educativo</h3>
+    ${linhaResultado("Placas de controle", "controle")}
+    ${linhaResultado("Grupo vermelho-verde", "vermelho-verde")}
+    ${linhaResultado("Grupo azul-amarelo", "azul-amarelo")}
+    ${linhaResultado("Distinção de tonalidades", "tons")}
+
+    <div class="tempo-geral">
+      ⏱️ <strong>Tempo médio geral:</strong>
+      ${(respostas.reduce((soma, r) => soma + r.tempoMs, 0) / respostas.length / 1000).toFixed(1).replace(".", ",")} s por placa
+    </div>
+
+    ${explicacaoMaiorDificuldade()}
+
     <p>
-      <strong>Este resultado não é diagnóstico.</strong>
-      A percepção pode ser influenciada pela tela, brilho, iluminação e outros fatores.
+      O desempenho mostra apenas como você respondeu às combinações de cores
+      utilizadas nesta experiência digital.
     </p>
-    <button class="btn principal" id="btnReiniciar">Fazer novamente</button>
+    <p>
+      <strong>Este projeto não realiza diagnóstico de daltonismo.</strong>
+      Tela, brilho, iluminação, filtros de cor e características do dispositivo
+      podem alterar o resultado. Dificuldades percebidas no cotidiano devem ser
+      avaliadas por um profissional da visão.
+    </p>
+
+    <div class="card-conclusao ${conclusao.classe}">
+      <div class="status-topo">
+        <div class="status-icone">${conclusao.icone}</div>
+        <h4>${conclusao.titulo}</h4>
+      </div>
+      <p>${conclusao.texto}</p>
+    </div>
+
+    <button class="btn principal btn-proximo" id="btnReiniciar" style="margin-top:22px;">
+      ${modoFeira ? "👤 Próximo participante" : "Gerar novo teste"}
+    </button>
+    ${modoFeira ? '<p class="feira-aviso">Modo Feira ativo: ao continuar, as respostas deste participante são descartadas do navegador.</p>' : ""}
   `;
 
-  document
-    .getElementById("btnReiniciar")
-    .addEventListener("click", iniciarTeste);
+  document.getElementById("btnReiniciar").addEventListener("click", iniciarTeste);
 }
 
 btnComecar.addEventListener("click", iniciarTeste);
 
 btnResponder.addEventListener("click", () => {
-  if (respostaInput.value.trim() === "") return;
-  registrarResposta(respostaInput.value);
+  const valor = respostaInput.value.trim();
+  if (valor !== "") registrarResposta(valor);
 });
 
-btnNaoVejo.addEventListener("click", () => {
-  registrarResposta(null);
-});
+btnNaoVejo.addEventListener("click", () => registrarResposta(null));
 
-respostaInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter" && respostaInput.value.trim() !== "") {
-    registrarResposta(respostaInput.value);
+respostaInput.addEventListener("keydown", event => {
+  if (event.key === "Enter") {
+    const valor = respostaInput.value.trim();
+    if (valor !== "") registrarResposta(valor);
   }
 });
 
-// Desenho inicial
-ctx.fillStyle = "#d8bd83";
+
+// MODO FEIRA
+function aplicarModoFeira(ativo) {
+  modoFeira = ativo;
+  document.body.classList.toggle("modo-feira", ativo);
+  feiraToggle.classList.toggle("ativo", ativo);
+  feiraToggle.setAttribute("aria-pressed", ativo ? "true" : "false");
+  feiraToggle.querySelector(".feira-texto").textContent =
+    ativo ? "Feira ativa" : "Modo Feira";
+}
+
+feiraToggle.addEventListener("click", () => {
+  aplicarModoFeira(!modoFeira);
+});
+
+// TEMA CLARO / ESCURO
+function aplicarTema(tema) {
+  const claro = tema === "claro";
+  document.body.classList.toggle("tema-claro", claro);
+
+  temaIcone.textContent = claro ? "🌙" : "☀️";
+  temaTexto.textContent = claro ? "Modo escuro" : "Modo claro";
+  temaToggle.setAttribute("aria-pressed", claro ? "true" : "false");
+
+  localStorage.setItem("colorvisao-tema", tema);
+}
+
+const temaSalvo = localStorage.getItem("colorvisao-tema") || "escuro";
+aplicarTema(temaSalvo);
+
+temaToggle.addEventListener("click", () => {
+  const estaClaro = document.body.classList.contains("tema-claro");
+  aplicarTema(estaClaro ? "escuro" : "claro");
+});
+
+// Estado inicial.
+ctx.fillStyle = "#d4b879";
 ctx.beginPath();
 ctx.arc(250, 250, 238, 0, Math.PI * 2);
 ctx.fill();
 
-ctx.fillStyle = "rgba(255,255,255,.55)";
-ctx.font = "700 26px Arial";
+ctx.fillStyle = "rgba(255,255,255,.65)";
+ctx.font = "700 27px Arial";
 ctx.textAlign = "center";
 ctx.textBaseline = "middle";
 ctx.fillText("ColorVisão", 250, 250);

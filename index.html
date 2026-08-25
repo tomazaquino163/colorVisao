@@ -16,11 +16,28 @@
         <span>ColorVisão</span>
       </a>
 
-      <nav>
-        <a href="#inicio">Início</a>
-        <a href="#sobre">Sobre</a>
-        <a href="#teste">Teste</a>
-      </nav>
+      <div class="nav-direita">
+        <nav>
+          <a href="#inicio">Início</a>
+          <a href="#sobre">Sobre</a>
+          <a href="#teste">Teste</a>
+        </nav>
+
+        <button
+          class="tema-toggle"
+          id="temaToggle"
+          type="button"
+          aria-label="Alternar entre modo claro e modo escuro"
+          aria-pressed="false"
+        >
+          <span class="tema-icone" id="temaIcone">☀️</span>
+          <span class="tema-texto" id="temaTexto">Modo claro</span>
+        </button>
+        <button class="feira-toggle" id="feiraToggle" type="button" aria-pressed="false">
+          <span>🏆</span>
+          <span class="feira-texto">Modo Feira</span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -52,7 +69,45 @@
           </div>
           <div class="hero-card-info">
             <strong>Teste interativo</strong>
-            <p>Imagens são montadas dinamicamente no navegador.</p>
+            <p>Placas animadas são geradas dinamicamente no navegador.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <section class="secao escola-secao" aria-labelledby="titulo-escola">
+      <div class="container">
+        <div class="escola-card">
+          <div class="escola-logo-wrap">
+            <img
+              src="logo-escola.jpg"
+              alt="Logo do Colégio Estadual Cívico Militar Dona Moralina Eleutério EFM"
+              class="escola-logo"
+            >
+          </div>
+
+          <div class="escola-conteudo">
+            <span class="escola-selo">🎓 Projeto Escolar • Engenharia</span>
+            <h2 id="titulo-escola">Engenharia de Software aplicada à inclusão</h2>
+
+            <p class="escola-destaque">
+              Projeto desenvolvido no
+              <strong>Colégio Estadual Cívico Militar Dona Moralina Eleutério – EFM</strong>,
+              em Santo Antônio da Platina – PR.
+            </p>
+
+            <p>
+              O ColorVisão transforma um problema observado no ambiente escolar em uma solução digital, aplicando princípios de <strong>Engenharia de Software</strong>, ciência, tecnologia e acessibilidade para estudar a percepção de cores e incentivar materiais mais inclusivos.
+            </p>
+
+            <div class="escola-tags" aria-label="Áreas do projeto">
+              <span class="tag-engenharia">⚙ Engenharia de Software</span>
+              <span>Ciência</span>
+              <span>Tecnologia</span>
+              <span>Acessibilidade</span>
+              <span>Pesquisa escolar</span>
+            </div>
           </div>
         </div>
       </div>
@@ -106,7 +161,7 @@
           <div class="progresso">
             <div>
               <strong>Questão</strong>
-              <span id="numeroQuestao">0 / 5</span>
+              <span id="numeroQuestao">0 / 12</span>
             </div>
             <div class="barra">
               <div id="barraProgresso"></div>
@@ -131,7 +186,7 @@
               <button class="btn principal" id="btnResponder">Responder</button>
             </div>
 
-            <button class="btn-link" id="btnNaoVejo">Não consigo identificar</button>
+            <button class="btn nao-identifico" id="btnNaoVejo">👁️ Não consigo identificar</button>
           </div>
 
           <div id="resultado" class="resultado oculto"></div>

@@ -1,28 +1,85 @@
-# ColorVisão
+# ColorVisão v9
 
 Projeto escolar educativo sobre percepção de cores, daltonismo e acessibilidade.
 
+## O que mudou na v2
+
+- 20 questões por execução.
+- Números aleatórios de 1 a 98 sem repetição na mesma sessão.
+- Placas animadas com movimento suave dos pontos.
+- Máscara reforçada para formar números mais legíveis.
+- Grupos de teste: controle, vermelho-verde, azul-amarelo e tonalidades.
+- Resultado separado por categoria.
+- Novo teste gera outra sequência e novas placas.
+
 ## Tecnologias
 
-- HTML5
-- CSS3
-- JavaScript
-- Canvas API
-- GitHub Pages
+HTML5, CSS3, JavaScript e Canvas API.
 
-## Como executar
+## Publicação
 
-Abra o arquivo `index.html` no navegador.
+Envie `index.html`, `style.css` e `script.js` para a raiz do repositório
+e publique com GitHub Pages.
 
-## Publicação no GitHub Pages
+## Importante
 
-1. Crie um repositório no GitHub.
-2. Envie `index.html`, `style.css` e `script.js`.
-3. Acesse **Settings > Pages**.
-4. Em **Build and deployment**, escolha **Deploy from a branch**.
-5. Selecione a branch `main` e a pasta `/ (root)`.
-6. Salve.
+O ColorVisão é uma experiência educativa. As placas e pontuações do projeto
+não possuem validação clínica e não devem ser usadas para diagnóstico médico.
 
-## Aviso
 
-O ColorVisão é um projeto educativo e não realiza diagnóstico médico.
+## Novidades da v3
+
+- Placa visualmente menor para caber melhor em notebooks de 15,6".
+- Layout vertical do teste mais compacto.
+- Card final em verde, amarelo ou vermelho.
+- Estado cinza de resultado inconclusivo quando as placas de controle apresentam dificuldade.
+- Conclusão indica qual grupo cromático apresentou maior dificuldade.
+
+
+## Novidades da v4
+
+- Logo oficial da escola incluída no projeto.
+- Novo card institucional em destaque na página inicial.
+- Identificação do projeto como iniciativa escolar.
+- Card responsivo para desktop e celular.
+
+## Novidades da v5
+
+- Engenharia destacada no card institucional.
+- Ênfase em Engenharia de Software como área do projeto.
+- Texto do card relaciona problema escolar, solução digital, ciência, tecnologia e acessibilidade.
+- Tag visual exclusiva para Engenharia de Software.
+
+## Novidades da v6
+
+- Teste reduzido de 20 para 10 placas para facilitar demonstrações e repetições.
+- Distribuição: 2 controle, 4 vermelho-verde, 3 azul-amarelo e 1 tonalidades.
+- Rolagem ao iniciar o teste ajustada para parar mais acima e alinhar melhor a placa em notebooks.
+- Resultado recalibrado para a nova quantidade de questões.
+
+## Novidades da v7
+
+- Botão de modo claro/escuro em destaque no topo.
+- Preferência de tema salva no navegador.
+- Modo claro aplicado ao site inteiro, incluindo cards, formulário e card institucional.
+- Rolagem ao iniciar o teste corrigida para manter o título da seção visível.
+- Foco no campo de resposta não força mais uma segunda rolagem da página.
+
+## Novidades da v8
+
+- Teste ampliado de 10 para 12 placas.
+- Distinção de tonalidades ampliada de 1 para 3 placas.
+- Distribuição atual: 2 controle, 4 vermelho-verde, 3 azul-amarelo e 3 tonalidades.
+- Cálculo final recalibrado para as 12 questões.
+- Distinção de tonalidades agora também participa da identificação do grupo com maior dificuldade.
+
+## Novidades da v9
+
+- Cronometragem automática de cada resposta.
+- Tempo médio exibido por categoria e no teste completo.
+- Barras visuais de desempenho no resultado.
+- Botão “Não consigo identificar” mais evidente.
+- Análise automática do grupo com maior dificuldade.
+- Explicação educativa da categoria com menor desempenho.
+- Modo Feira no cabeçalho.
+- No Modo Feira, o botão final muda para “Próximo participante”, facilitando demonstrações consecutivas.
