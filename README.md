@@ -1,4 +1,4 @@
-# ColorVisão v11
+# ColorVisão v12
 
 Projeto escolar educativo sobre percepção de cores, daltonismo e acessibilidade.
 
@@ -102,3 +102,9 @@ não possuem validação clínica e não devem ser usadas para diagnóstico méd
 - Menu superior alterado para Início | Sobre | QR Code.
 - Item Teste removido do menu.
 - QR Code no menu leva suavemente ao card de acesso no final da página.
+
+## Novidades da v12
+
+- Cache-busting aplicado ao CSS e JavaScript.
+- `style.css?v=12` e `script.js?v=12` forçam celulares e navegadores a baixar a versão atual.
+- Mantidas as 20 placas e todos os recursos da v11.
