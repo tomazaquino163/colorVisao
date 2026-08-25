@@ -1,4 +1,4 @@
-# ColorVisão v9
+# ColorVisão v11
 
 Projeto escolar educativo sobre percepção de cores, daltonismo e acessibilidade.
 
@@ -83,3 +83,22 @@ não possuem validação clínica e não devem ser usadas para diagnóstico méd
 - Explicação educativa da categoria com menor desempenho.
 - Modo Feira no cabeçalho.
 - No Modo Feira, o botão final muda para “Próximo participante”, facilitando demonstrações consecutivas.
+
+## Novidades da v10
+
+- Modo Feira removido para simplificar a experiência.
+- Botão final alterado para “Iniciar teste para um novo participante”.
+- Novo QR Code do projeto publicado.
+- Card grande e responsivo próximo ao final da página para acesso pelo celular.
+- Link oficial: https://tomazaquino163.github.io/colorVisao/
+
+## Novidades da v11
+
+- Teste ampliado novamente para 20 placas.
+- Distribuição: 4 controle, 7 vermelho-verde, 5 azul-amarelo e 4 tonalidades.
+- Resultados recalibrados para a nova quantidade de questões.
+- Placas de controle agora exigem pelo menos 3 acertos em 4 para permitir interpretação cromática.
+- Tempo total do teste acrescentado ao resultado.
+- Menu superior alterado para Início | Sobre | QR Code.
+- Item Teste removido do menu.
+- QR Code no menu leva suavemente ao card de acesso no final da página.

@@ -14,13 +14,12 @@ const instrucao = document.getElementById("instrucao");
 const temaToggle = document.getElementById("temaToggle");
 const temaIcone = document.getElementById("temaIcone");
 const temaTexto = document.getElementById("temaTexto");
-const feiraToggle = document.getElementById("feiraToggle");
 
 const PLANO = [
-  ...Array(2).fill("controle"),
-  ...Array(4).fill("vermelho-verde"),
-  ...Array(3).fill("azul-amarelo"),
-  ...Array(3).fill("tons")
+  ...Array(4).fill("controle"),
+  ...Array(7).fill("vermelho-verde"),
+  ...Array(5).fill("azul-amarelo"),
+  ...Array(4).fill("tons")
 ];
 
 const TOTAL_QUESTOES = PLANO.length;
@@ -34,7 +33,6 @@ let pontos = [];
 let mascara = null;
 let animationId = null;
 let inicioQuestao = 0;
-let modoFeira = false;
 
 const paletas = {
   controle: {
@@ -317,7 +315,7 @@ function gerarConclusao() {
 
   // Se até as placas de controle apresentarem dificuldade,
   // evitamos interpretar o resultado cromático.
-  if (controle < 100) {
+  if (controle < 75) {
     return {
       classe: "status-inconclusivo",
       icone: "?",
@@ -334,7 +332,7 @@ function gerarConclusao() {
   ];
 
   const mediaCromatica =
-    (vermelhoVerde * 4 + azulAmarelo * 3 + tons * 3) / 10;
+    (vermelhoVerde * 7 + azulAmarelo * 5 + tons * 4) / 16;
 
   const pior = [...grupos].sort((a, b) => a.valor - b.valor)[0];
 
@@ -405,6 +403,18 @@ function explicacaoMaiorDificuldade() {
   `;
 }
 
+function formatarTempoTotal(ms) {
+  const totalSegundos = Math.round(ms / 1000);
+  const minutos = Math.floor(totalSegundos / 60);
+  const segundos = totalSegundos % 60;
+
+  if (minutos === 0) {
+    return `${segundos} s`;
+  }
+
+  return `${minutos} min ${String(segundos).padStart(2, "0")} s`;
+}
+
 function finalizarTeste() {
   if (animationId) cancelAnimationFrame(animationId);
   animationId = null;
@@ -426,6 +436,9 @@ function finalizarTeste() {
     <div class="tempo-geral">
       ⏱️ <strong>Tempo médio geral:</strong>
       ${(respostas.reduce((soma, r) => soma + r.tempoMs, 0) / respostas.length / 1000).toFixed(1).replace(".", ",")} s por placa
+      <br>
+      ⏳ <strong>Tempo total do teste:</strong>
+      ${formatarTempoTotal(respostas.reduce((soma, r) => soma + r.tempoMs, 0))}
     </div>
 
     ${explicacaoMaiorDificuldade()}
@@ -450,9 +463,11 @@ function finalizarTeste() {
     </div>
 
     <button class="btn principal btn-proximo" id="btnReiniciar" style="margin-top:22px;">
-      ${modoFeira ? "👤 Próximo participante" : "Gerar novo teste"}
+      👤 Iniciar teste para um novo participante
     </button>
-    ${modoFeira ? '<p class="feira-aviso">Modo Feira ativo: ao continuar, as respostas deste participante são descartadas do navegador.</p>' : ""}
+    <p class="novo-participante-aviso">
+      Uma nova sequência de placas e números será gerada automaticamente.
+    </p>
   `;
 
   document.getElementById("btnReiniciar").addEventListener("click", iniciarTeste);
@@ -474,20 +489,6 @@ respostaInput.addEventListener("keydown", event => {
   }
 });
 
-
-// MODO FEIRA
-function aplicarModoFeira(ativo) {
-  modoFeira = ativo;
-  document.body.classList.toggle("modo-feira", ativo);
-  feiraToggle.classList.toggle("ativo", ativo);
-  feiraToggle.setAttribute("aria-pressed", ativo ? "true" : "false");
-  feiraToggle.querySelector(".feira-texto").textContent =
-    ativo ? "Feira ativa" : "Modo Feira";
-}
-
-feiraToggle.addEventListener("click", () => {
-  aplicarModoFeira(!modoFeira);
-});
 
 // TEMA CLARO / ESCURO
 function aplicarTema(tema) {
