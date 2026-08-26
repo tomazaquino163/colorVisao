@@ -1,4 +1,4 @@
-# ColorVisão v13
+# ColorVisão v14
 
 Projeto escolar educativo sobre percepção de cores, daltonismo e acessibilidade.
 
@@ -116,3 +116,11 @@ não possuem validação clínica e não devem ser usadas para diagnóstico méd
 - O fundo das placas vermelho-verde agora usa tons esverdeados.
 - Mantidas as 20 placas, QR Code, modo claro/escuro, cronômetros e resultados.
 - Cache-busting atualizado para `?v=13`.
+
+## Novidades da v14
+
+- Identidade oficial do projeto incorporada ao site: **ÍRIS • Engenharia da Visão**.
+- ColorVisão passa a ser apresentado explicitamente como a solução tecnológica do projeto ÍRIS.
+- Identidade reforçada no card institucional da escola.
+- Layout responsivo preservado.
+- Cache-busting atualizado para `?v=14`.

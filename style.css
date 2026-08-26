@@ -1240,3 +1240,88 @@ body.tema-claro .qr-box {
 #acessar {
   scroll-margin-top: 92px;
 }
+
+
+/* ColorVisão v14 — identidade do projeto ÍRIS */
+.iris-slogan {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .055em;
+  white-space: nowrap;
+}
+
+.iris-slogan b {
+  color: var(--destaque);
+}
+
+.iris-faixa {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(99,230,190,.18);
+  background: linear-gradient(90deg, rgba(99,230,190,.08), rgba(116,192,252,.08));
+  color: var(--texto);
+}
+
+.iris-faixa > span {
+  color: var(--destaque);
+  font-weight: 950;
+  letter-spacing: .12em;
+}
+
+.iris-faixa > b {
+  font-size: .92rem;
+}
+
+.iris-faixa > small {
+  color: var(--muted);
+  font-size: .72rem;
+}
+
+.iris-projeto-label {
+  display: inline-block;
+  margin-bottom: 7px;
+  color: var(--destaque);
+  font-size: .76rem;
+  font-weight: 950;
+  letter-spacing: .14em;
+}
+
+.iris-solucao {
+  margin-top: -4px !important;
+  margin-bottom: 14px !important;
+  color: var(--muted) !important;
+  font-size: .94rem !important;
+}
+
+.iris-solucao strong {
+  color: var(--destaque2) !important;
+}
+
+body.tema-claro .iris-faixa {
+  border-bottom-color: rgba(39,125,98,.14);
+  background: linear-gradient(90deg, rgba(39,125,98,.07), rgba(40,124,175,.06));
+}
+
+@media (max-width: 650px) {
+  .iris-slogan {
+    font-size: .58rem;
+  }
+
+  .iris-faixa {
+    flex-wrap: wrap;
+    gap: 4px 7px;
+    text-align: center;
+  }
+
+  .iris-faixa > small {
+    flex-basis: 100%;
+  }
+}
