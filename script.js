@@ -40,8 +40,8 @@ const paletas = {
     figura: ["#496d70", "#557b78", "#3f6468", "#638582"]
   },
   "vermelho-verde": {
-    fundo: ["#b6a05e", "#c0aa68", "#aa9659", "#c7b06d", "#b09b62"],
-    figura: ["#a65f55", "#b16a5c", "#9b5c50", "#ad6558", "#a25e54"]
+    fundo: ["#668c58", "#72965f", "#5f8253", "#7b9b68", "#6b8f5c"],
+    figura: ["#b75f59", "#c26860", "#aa554f", "#bd6a61", "#a95b55"]
   },
   "azul-amarelo": {
     fundo: ["#c5a95d", "#d0b66c", "#b99d55", "#d7bd72", "#c0a45c"],

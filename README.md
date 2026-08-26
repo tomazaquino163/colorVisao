@@ -1,4 +1,4 @@
-# ColorVisão v12
+# ColorVisão v13
 
 Projeto escolar educativo sobre percepção de cores, daltonismo e acessibilidade.
 
@@ -108,3 +108,11 @@ não possuem validação clínica e não devem ser usadas para diagnóstico méd
 - Cache-busting aplicado ao CSS e JavaScript.
 - `style.css?v=12` e `script.js?v=12` forçam celulares e navegadores a baixar a versão atual.
 - Mantidas as 20 placas e todos os recursos da v11.
+
+## Novidades da v13
+
+- Paleta vermelho-verde corrigida.
+- Nas placas dessa categoria, os números agora usam tons avermelhados.
+- O fundo das placas vermelho-verde agora usa tons esverdeados.
+- Mantidas as 20 placas, QR Code, modo claro/escuro, cronômetros e resultados.
+- Cache-busting atualizado para `?v=13`.
