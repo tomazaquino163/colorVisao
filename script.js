@@ -345,8 +345,12 @@ function resumoCategoria(categoria) {
   const itens = categoria === "vermelho-verde"
     ? respostas.filter(r => ehVermelhoVerde(r.categoria))
     : respostas.filter(r => r.categoria === categoria);
-  return { total: itens.length, acertos: itens.filter(r => r.acertou).length,
-           naoViu: itens.filter(r => r.resposta === null).length };
+
+  return {
+    total: itens.length,
+    acertos: itens.filter(r => r.correto).length,
+    naoViu: itens.filter(r => r.informado === null).length
+  };
 }
 
 function tempoMedioCategoria(categoria) {
@@ -502,7 +506,15 @@ function finalizarTeste() {
   resultado.innerHTML = `
     <h3>Resultado educativo</h3>
     ${linhaResultado("Placas de controle", "controle")}
-    ${linhaResultado("Grupo vermelho-verde", "vermelho-verde")}
+    ${linhaResultado("Eixo vermelho-verde (total)", "vermelho-verde")}
+
+    <div class="subtipos-v16">
+      <strong>Comportamentos experimentais do eixo vermelho-verde</strong>
+      ${linhaResultado("Desaparecimento", "desaparecimento")}
+      ${linhaResultado("Transformação", "transformacao")}
+      ${linhaResultado("Número oculto", "oculto")}
+    </div>
+
     ${linhaResultado("Grupo azul-amarelo", "azul-amarelo")}
     ${linhaResultado("Distinção de tonalidades", "tons")}
 

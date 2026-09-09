@@ -1,4 +1,4 @@
-# ColorVisão v16
+# ColorVisão v17
 
 Projeto escolar educativo sobre percepção de cores, daltonismo e acessibilidade.
 
@@ -142,3 +142,11 @@ não possuem validação clínica e não devem ser usadas para diagnóstico méd
 - Novos comportamentos vermelho-verde experimentais no resultado.
 - Não reproduz nem substitui o Ishihara clínico.
 - Cache atualizado para ?v=16.
+
+## Correção crítica da v17
+
+- Corrigido o cálculo de acertos.
+- `registrarResposta()` grava `correto` e `informado`, mas a v16 consultava por engano `acertou` e `resposta`.
+- Esse erro fazia o resultado considerar todas as respostas como erradas, mesmo quando estavam corretas.
+- Resultado detalhado dos comportamentos vermelho-verde acrescentado.
+- Cache-busting atualizado para `?v=17`.
