@@ -1,4 +1,4 @@
-# ColorVisão v17
+# ColorVisão v18
 
 Projeto escolar educativo sobre percepção de cores, daltonismo e acessibilidade.
 
@@ -150,3 +150,16 @@ não possuem validação clínica e não devem ser usadas para diagnóstico méd
 - Esse erro fazia o resultado considerar todas as respostas como erradas, mesmo quando estavam corretas.
 - Resultado detalhado dos comportamentos vermelho-verde acrescentado.
 - Cache-busting atualizado para `?v=17`.
+
+## Novidades da v18 — três motores experimentais de verdade
+
+- 25 placas mantidas.
+- Desaparecimento agora usa pares cromáticos escolhidos para perder contraste em uma simulação simplificada de deutan.
+- Transformação agora contém dois números diferentes: um padrão típico experimental e um número alternativo.
+- Número oculto agora tem interpretação reversa: “Não consigo identificar” é a resposta típica experimental; identificar o número mascarado registra um indicador vermelho-verde.
+- O resultado não trata mais todas as questões como simples acerto/erro.
+- O sistema conta indicadores experimentais vermelho-verde separadamente.
+- Cache atualizado para `?v=18`.
+
+### Limitação
+Os pares cromáticos foram projetados experimentalmente por algoritmo e não são placas clínicas validadas. A resposta de participantes reais deve ser usada para calibrar as próximas versões.

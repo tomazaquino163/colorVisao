@@ -1362,3 +1362,39 @@ body.tema-claro .metodo-v15 {
 .subtipos-v16>strong{display:block;margin-bottom:8px;color:var(--destaque)}
 .subtipos-v16 .resultado-grupo{margin:10px 0}
 body.tema-claro .subtipos-v16{border-color:rgba(39,125,98,.16);background:rgba(39,125,98,.04)}
+
+
+/* ColorVisão v18 — análise real dos comportamentos experimentais */
+.padrao-rg-v18 {
+  margin: 20px 0;
+  padding: 20px;
+  border: 1px solid rgba(116,192,252,.28);
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(116,192,252,.08), rgba(99,230,190,.055));
+}
+
+.padrao-rg-v18 > span {
+  color: var(--destaque2);
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .11em;
+}
+
+.padrao-rg-v18 h4 {
+  margin: 5px 0 8px;
+  font-size: 1.25rem;
+}
+
+.padrao-rg-v18 p {
+  margin: 0 0 7px;
+}
+
+.padrao-rg-v18 small {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+body.tema-claro .padrao-rg-v18 {
+  border-color: rgba(40,124,175,.18);
+  background: linear-gradient(135deg, rgba(40,124,175,.07), rgba(39,125,98,.05));
+}

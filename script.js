@@ -27,74 +27,65 @@ const PLANO = [
 const TOTAL_QUESTOES = PLANO.length;
 
 let questaoAtual = 0;
-let numeroAtual = null;
 let numerosUsados = new Set();
 let perguntas = [];
 let respostas = [];
 let pontos = [];
-let mascara = null;
+let mascaraA = null;
+let mascaraB = null;
 let animationId = null;
 let inicioQuestao = 0;
+let corBaseAtual = "#b5a57d";
 
-const paletas = {
-  controle: [
-    {
-      fundo: ["#d6b66f", "#c9a66c", "#dfc27d", "#bea06a", "#d1ad72"],
-      figura: ["#416f73", "#4b7979", "#38676d", "#5a8380"],
-      base: "#c9aa70"
-    }
-  ],
-
-  // Paletas experimentais pseudoisocromáticas:
-  // figura e fundo têm luminância visual aproximada para reduzir pistas de brilho.
-  "vermelho-verde": [
-    {
-      fundo: ["#788f63", "#82976c", "#70875d", "#879c70", "#758c61"],
-      figura: ["#a66f67", "#ad756c", "#9d6962", "#b07970", "#a36d66"],
-      base: "#7d9068"
-    },
-    {
-      fundo: ["#82906a", "#778861", "#8b9871", "#73835e", "#85936c"],
-      figura: ["#a87368", "#9f6b62", "#b07a6d", "#a26e65", "#aa7569"],
-      base: "#81906a"
-    },
-    {
-      fundo: ["#6f8660", "#7b8f68", "#748961", "#82966e", "#6b825c"],
-      figura: ["#9e6c65", "#a8736a", "#95645f", "#ac786e", "#a06d66"],
-      base: "#778a64"
-    },
-    {
-      fundo: ["#87936f", "#7c8b67", "#909a77", "#748461", "#83906b"],
-      figura: ["#aa766d", "#a16e67", "#b17d72", "#99665f", "#a87369"],
-      base: "#84906d"
-    }
-  ],
-
-  "azul-amarelo": [
-    {
-      fundo: ["#b9a76d", "#c0ad73", "#b19f68", "#c5b277", "#b6a36a"],
-      figura: ["#73899a", "#7c91a0", "#6b8194", "#8498a5", "#718797"],
-      base: "#b5a46d"
-    },
-    {
-      fundo: ["#b4a16a", "#bdab72", "#aa9864", "#c1ae75", "#b09e68"],
-      figura: ["#6f8495", "#788d9d", "#657c90", "#8094a3", "#6c8293"],
-      base: "#b19f69"
-    }
-  ],
-
-  tons: [
-    {
-      fundo: ["#b49c82", "#baa288", "#ad957c", "#c0a78c", "#b09880"],
-      figura: ["#9f8978", "#a58e7d", "#978274", "#aa9381", "#9b8576"],
-      base: "#af9780"
-    }
-  ]
+// Paletas de controle/azul/tons.
+const PALETAS = {
+  controle: {
+    fundo: ["#d6b66f", "#c9a66c", "#dfc27d", "#bea06a", "#d1ad72"],
+    figura: ["#416f73", "#4b7979", "#38676d", "#5a8380"],
+    base: "#c9aa70"
+  },
+  azul: {
+    fundo: ["#b9a76d", "#c0ad73", "#b19f68", "#c5b277", "#b6a36a"],
+    figura: ["#73899a", "#7c91a0", "#6b8194", "#8498a5", "#718797"],
+    base: "#b5a46d"
+  },
+  tons: {
+    fundo: ["#b49c82", "#baa288", "#ad957c", "#c0a78c", "#b09880"],
+    figura: ["#9f8978", "#a58e7d", "#978274", "#aa9381", "#9b8576"],
+    base: "#af9780"
+  }
 };
-paletas.desaparecimento = paletas["vermelho-verde"];
-paletas.transformacao = paletas["vermelho-verde"];
-paletas.oculto = paletas["vermelho-verde"];
 
+// DESAPARECIMENTO:
+// cores diferentes em visão típica, mas escolhidas para se aproximarem
+// em uma simulação matemática simplificada de deutan.
+// Isso é experimental, não uma calibração clínica.
+const DESAPARECIMENTO = {
+  fundo: ["#c75c68", "#c26866", "#be6168", "#c96a6b", "#b95d64"],
+  figura: ["#9ba346", "#a2a94c", "#95a043", "#a8ad51", "#9ca548"],
+  base: "#b78c5f"
+};
+
+// NÚMERO OCULTO (reverse / hidden experimental):
+// dentro e fora usam DOIS tons bastante diferentes para uma pessoa
+// tricromata, produzindo "ruído cromático"; em simulação deutan, cada par
+// tende a se agrupar em clusters diferentes, podendo revelar a máscara.
+const OCULTO = {
+  figura: ["#c64e57", "#9d993f"],   // vermelho + oliva
+  fundo:  ["#3caf97", "#665cb5"],   // verde-azulado + violeta
+  base: "#8b817d"
+};
+
+// TRANSFORMAÇÃO:
+// número A é construído pelo princípio de desaparecimento;
+// número B é construído pelo princípio de número oculto.
+// A intenção é que respostas diferentes possam surgir de padrões cromáticos distintos.
+const TRANSFORMACAO = {
+  tipico: ["#9ba346", "#a2a94c", "#95a043"],
+  fundo: ["#c75c68", "#c26866", "#be6168"],
+  alternativo: ["#3caf97", "#665cb5"],
+  base: "#aa826a"
+};
 
 function embaralhar(lista) {
   const copia = [...lista];
@@ -125,7 +116,6 @@ function criarMascara(numero) {
   mctx.textAlign = "center";
   mctx.textBaseline = "middle";
 
-  // Números de dois dígitos precisam ser menores para manter contorno limpo.
   const tamanho = numero < 10 ? 245 : 205;
   mctx.font = `900 ${tamanho}px Arial, Helvetica, sans-serif`;
   mctx.fillText(String(numero), off.width / 2, off.height / 2 + 6);
@@ -133,100 +123,140 @@ function criarMascara(numero) {
   return mctx.getImageData(0, 0, off.width, off.height);
 }
 
-function estaNaMascara(x, y) {
+function naMascara(img, x, y) {
+  if (!img) return false;
   const px = Math.max(0, Math.min(canvas.width - 1, Math.round(x)));
   const py = Math.max(0, Math.min(canvas.height - 1, Math.round(y)));
-  return mascara.data[(py * canvas.width + px) * 4 + 3] > 80;
+  return img.data[(py * canvas.width + px) * 4 + 3] > 80;
 }
 
 function dentroPlaca(x, y, margem = 0) {
   return Math.hypot(x - 250, y - 250) < 230 - margem;
 }
 
-function escolherCor(lista) {
+function escolher(lista) {
   return lista[Math.floor(Math.random() * lista.length)];
 }
 
-function ehVermelhoVerde(categoria) {
-  return ["vermelho-verde","desaparecimento","transformacao","oculto"].includes(categoria);
-}
-function escolherPaleta(categoria) {
-  const variantes = paletas[categoria];
-  return variantes[Math.floor(Math.random() * variantes.length)];
-}
-
-// Aproxima a luminância relativa para evitar que o número seja revelado
-// apenas por diferença de brilho/contraste.
-function luminanciaHex(hex) {
-  const rgb = hex.replace("#", "").match(/.{2}/g).map(v => parseInt(v, 16) / 255);
-  const linear = rgb.map(c => c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
-  return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
-}
-
-function criarPonto(x, y, grupo, paleta, tamanhoMin, tamanhoMax) {
+function criarPonto(x, y, grupo, cor) {
   pontos.push({
     baseX: x,
     baseY: y,
     grupo,
-    raio: tamanhoMin + Math.random() * (tamanhoMax - tamanhoMin),
-    cor: escolherCor(grupo === "figura" ? paleta.figura : paleta.fundo),
+    raio: 4.3 + Math.random() * 2.2,
+    cor,
     faseX: Math.random() * Math.PI * 2,
     faseY: Math.random() * Math.PI * 2,
     velocidade: 0.00065 + Math.random() * 0.00055,
-    amplitude: 0.7 + Math.random() * 1.6
+    amplitude: 0.65 + Math.random() * 1.45
   });
+}
+
+function grupoNoPonto(categoria, x, y) {
+  const a = naMascara(mascaraA, x, y);
+  const b = naMascara(mascaraB, x, y);
+
+  if (categoria === "transformacao") {
+    if (a && !b) return "tipico";
+    if (b && !a) return "alternativo";
+    if (a && b) return "intersecao";
+    return "fundo";
+  }
+
+  return a ? "figura" : "fundo";
+}
+
+function corParaGrupo(categoria, grupo) {
+  if (categoria === "controle") {
+    return escolher(grupo === "figura" ? PALETAS.controle.figura : PALETAS.controle.fundo);
+  }
+
+  if (categoria === "desaparecimento") {
+    return escolher(grupo === "figura" ? DESAPARECIMENTO.figura : DESAPARECIMENTO.fundo);
+  }
+
+  if (categoria === "oculto") {
+    // Cada região usa uma mistura de duas cores; isso reduz a "silhueta por uma cor só".
+    return escolher(grupo === "figura" ? OCULTO.figura : OCULTO.fundo);
+  }
+
+  if (categoria === "transformacao") {
+    if (grupo === "tipico") return escolher(TRANSFORMACAO.tipico);
+    if (grupo === "alternativo") return escolher(TRANSFORMACAO.alternativo);
+    if (grupo === "intersecao") {
+      return Math.random() < 0.5 ? escolher(TRANSFORMACAO.tipico) : escolher(TRANSFORMACAO.alternativo);
+    }
+    return escolher(TRANSFORMACAO.fundo);
+  }
+
+  if (categoria === "azul-amarelo") {
+    return escolher(grupo === "figura" ? PALETAS.azul.figura : PALETAS.azul.fundo);
+  }
+
+  return escolher(grupo === "figura" ? PALETAS.tons.figura : PALETAS.tons.fundo);
 }
 
 function gerarPontos(categoria) {
   pontos = [];
-  const paleta = escolherPaleta(categoria);
 
-  // Grade mais fechada para impedir que a cor de base revele o desenho.
-  // Figura e fundo recebem a MESMA densidade de pontos.
-  const passo = categoria === "controle" ? 12 : 10.5;
+  if (categoria === "controle") corBaseAtual = PALETAS.controle.base;
+  else if (categoria === "desaparecimento") corBaseAtual = DESAPARECIMENTO.base;
+  else if (categoria === "oculto") corBaseAtual = OCULTO.base;
+  else if (categoria === "transformacao") corBaseAtual = TRANSFORMACAO.base;
+  else if (categoria === "azul-amarelo") corBaseAtual = PALETAS.azul.base;
+  else corBaseAtual = PALETAS.tons.base;
+
+  const passo = categoria === "controle" ? 12 : 10.2;
 
   for (let y = 24; y < 476; y += passo) {
     for (let x = 24; x < 476; x += passo) {
       const jitter = passo * 0.68;
       const jx = x + (Math.random() - 0.5) * jitter;
       const jy = y + (Math.random() - 0.5) * jitter;
+
       if (!dentroPlaca(jx, jy, 5)) continue;
 
-      const grupo = estaNaMascara(jx, jy) ? "figura" : "fundo";
-      criarPonto(
-        jx, jy, grupo, paleta,
-        categoria === "controle" ? 4.6 : 4.3,
-        categoria === "controle" ? 7.0 : 6.6
-      );
+      const grupo = grupoNoPonto(categoria, jx, jy);
+      criarPonto(jx, jy, grupo, corParaGrupo(categoria, grupo));
     }
   }
 
-  // Só as placas de controle recebem reforço da figura.
-  // Nas demais, reforçar o número cria uma pista de densidade que facilita demais.
+  // Controle recebe reforço leve para garantir leitura.
   if (categoria === "controle") {
     let adicionados = 0;
     let tentativas = 0;
-    while (adicionados < 260 && tentativas < 9000) {
+    while (adicionados < 250 && tentativas < 9000) {
       tentativas++;
       const x = 90 + Math.random() * 320;
       const y = 105 + Math.random() * 290;
-      if (dentroPlaca(x, y, 6) && estaNaMascara(x, y)) {
-        criarPonto(x, y, "figura", paleta, 3.8, 6.0);
+      if (dentroPlaca(x, y, 6) && naMascara(mascaraA, x, y)) {
+        criarPonto(x, y, "figura", escolher(PALETAS.controle.figura));
         adicionados++;
       }
     }
   }
-
-  // Guarda a cor neutra da placa para o desenho.
-  pontos.corBase = paleta.base;
 }
 
 function gerarQuestao() {
-  numeroAtual = gerarNumeroUnico();
-  const categoria = perguntas[questaoAtual].categoria;
-  mascara = criarMascara(numeroAtual);
-  gerarPontos(categoria);
-  perguntas[questaoAtual].numero = numeroAtual;
+  const q = perguntas[questaoAtual];
+
+  q.numeroTipico = gerarNumeroUnico();
+  q.numeroAlternativo = null;
+
+  mascaraA = criarMascara(q.numeroTipico);
+  mascaraB = null;
+
+  if (q.categoria === "transformacao") {
+    q.numeroAlternativo = gerarNumeroUnico();
+    mascaraB = criarMascara(q.numeroAlternativo);
+  }
+
+  // Em placa oculta, o número existe na máscara, mas a resposta típica esperada é "não vejo".
+  if (q.categoria === "oculto") {
+    q.numeroAlternativo = q.numeroTipico;
+  }
+
+  gerarPontos(q.categoria);
   inicioQuestao = performance.now();
 }
 
@@ -238,19 +268,17 @@ function desenharPlacaAnimada(tempo) {
   ctx.arc(250, 250, 239, 0, Math.PI * 2);
   ctx.clip();
 
-  ctx.fillStyle = pontos.corBase || "#b5a57d";
+  ctx.fillStyle = corBaseAtual;
   ctx.fillRect(0, 0, 500, 500);
 
+  const categoria = perguntas[questaoAtual]?.categoria;
+
   for (const p of pontos) {
-    let dx = Math.sin(tempo * p.velocidade + p.faseX) * p.amplitude;
-    let dy = Math.cos(tempo * (p.velocidade * 0.91) + p.faseY) * p.amplitude;
+    let x = p.baseX + Math.sin(tempo * p.velocidade + p.faseX) * p.amplitude;
+    let y = p.baseY + Math.cos(tempo * (p.velocidade * 0.91) + p.faseY) * p.amplitude;
 
-    // O movimento é pequeno para preservar a máscara.
-    let x = p.baseX + dx;
-    let y = p.baseY + dy;
-
-    // Se o movimento atravessar a fronteira do número, mantém a posição base.
-    if (estaNaMascara(x, y) !== (p.grupo === "figura")) {
+    // Preserva a região lógica do ponto durante a animação.
+    if (grupoNoPonto(categoria, x, y) !== p.grupo) {
       x = p.baseX;
       y = p.baseY;
     }
@@ -260,9 +288,9 @@ function desenharPlacaAnimada(tempo) {
     ctx.fillStyle = p.cor;
     ctx.fill();
 
-    ctx.globalAlpha = 0.12;
+    ctx.globalAlpha = 0.10;
     ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 0.8;
+    ctx.lineWidth = 0.7;
     ctx.stroke();
     ctx.globalAlpha = 1;
   }
@@ -284,24 +312,25 @@ function iniciarTeste() {
   questaoAtual = 0;
   numerosUsados = new Set();
   respostas = [];
-  perguntas = embaralhar(PLANO).map(categoria => ({ categoria, numero: null }));
+  perguntas = embaralhar(PLANO).map(categoria => ({
+    categoria,
+    numeroTipico: null,
+    numeroAlternativo: null
+  }));
 
   resultado.classList.add("oculto");
   areaResposta.classList.remove("oculto");
   respostaInput.value = "";
 
   instrucao.textContent =
-    "Observe a placa animada e informe o número que você consegue identificar.";
+    "Observe a placa animada. Digite o número que você vê ou escolha “Não consigo identificar”.";
   atualizarProgresso();
   gerarQuestao();
 
   animationId = requestAnimationFrame(desenharPlacaAnimada);
-  const secaoTeste = document.getElementById("teste");
 
-  // Mantém o título "Teste educativo de percepção de cores" visível.
-  // O deslocamento considera o cabeçalho fixo e deixa uma margem confortável.
-  const topoDesejado =
-    secaoTeste.getBoundingClientRect().top + window.scrollY - 28;
+  const secaoTeste = document.getElementById("teste");
+  const topoDesejado = secaoTeste.getBoundingClientRect().top + window.scrollY - 28;
 
   window.scrollTo({
     top: Math.max(0, topoDesejado),
@@ -316,17 +345,69 @@ function atualizarProgresso() {
   barraProgresso.style.width = `${((questaoAtual + 1) / TOTAL_QUESTOES) * 100}%`;
 }
 
+function interpretarResposta(q, informado) {
+  // Controle, azul-amarelo e tons: leitura do número esperado.
+  if (["controle", "azul-amarelo", "tons"].includes(q.categoria)) {
+    return {
+      tipicoCorreto: informado === q.numeroTipico,
+      indicadorRG: false,
+      classificacao: informado === q.numeroTipico ? "tipico" : "erro"
+    };
+  }
+
+  // Desaparecimento: visão típica tende a identificar o número;
+  // não identificar é tratado como indicador experimental vermelho-verde.
+  if (q.categoria === "desaparecimento") {
+    if (informado === q.numeroTipico) {
+      return { tipicoCorreto: true, indicadorRG: false, classificacao: "tipico" };
+    }
+    if (informado === null) {
+      return { tipicoCorreto: false, indicadorRG: true, classificacao: "indicador-rg" };
+    }
+    return { tipicoCorreto: false, indicadorRG: false, classificacao: "outro" };
+  }
+
+  // Transformação: A = padrão típico experimental; B = resposta alternativa experimental.
+  if (q.categoria === "transformacao") {
+    if (informado === q.numeroTipico) {
+      return { tipicoCorreto: true, indicadorRG: false, classificacao: "tipico" };
+    }
+    if (informado === q.numeroAlternativo) {
+      return { tipicoCorreto: false, indicadorRG: true, classificacao: "indicador-rg" };
+    }
+    return { tipicoCorreto: false, indicadorRG: false, classificacao: informado === null ? "nao-viu" : "outro" };
+  }
+
+  // Número oculto: para visão típica, "não consigo identificar" é a resposta-alvo.
+  // Identificar o número oculto é registrado como indicador experimental RG.
+  if (q.categoria === "oculto") {
+    if (informado === null) {
+      return { tipicoCorreto: true, indicadorRG: false, classificacao: "tipico" };
+    }
+    if (informado === q.numeroAlternativo) {
+      return { tipicoCorreto: false, indicadorRG: true, classificacao: "indicador-rg" };
+    }
+    return { tipicoCorreto: false, indicadorRG: false, classificacao: "outro" };
+  }
+
+  return { tipicoCorreto: false, indicadorRG: false, classificacao: "outro" };
+}
+
 function registrarResposta(valor) {
   if (!perguntas.length || questaoAtual >= perguntas.length) return;
 
-  const respostaNum = valor === null || valor === "" ? null : Number(valor);
+  const informado = valor === null || valor === "" ? null : Number(valor);
   const q = perguntas[questaoAtual];
+  const interpretacao = interpretarResposta(q, informado);
 
   respostas.push({
     categoria: q.categoria,
-    esperado: q.numero,
-    informado: respostaNum,
-    correto: respostaNum === q.numero,
+    numeroTipico: q.numeroTipico,
+    numeroAlternativo: q.numeroAlternativo,
+    informado,
+    tipicoCorreto: interpretacao.tipicoCorreto,
+    indicadorRG: interpretacao.indicadorRG,
+    classificacao: interpretacao.classificacao,
     tempoMs: Math.round(performance.now() - inicioQuestao)
   });
 
@@ -335,147 +416,130 @@ function registrarResposta(valor) {
     respostaInput.value = "";
     atualizarProgresso();
     gerarQuestao();
-    respostaInput.focus();
+    respostaInput.focus({ preventScroll: true });
   } else {
     finalizarTeste();
   }
 }
 
-function resumoCategoria(categoria) {
-  const itens = categoria === "vermelho-verde"
-    ? respostas.filter(r => ehVermelhoVerde(r.categoria))
-    : respostas.filter(r => r.categoria === categoria);
+function itensCategoria(categoria) {
+  if (categoria === "vermelho-verde") {
+    return respostas.filter(r =>
+      ["desaparecimento", "transformacao", "oculto"].includes(r.categoria)
+    );
+  }
+  return respostas.filter(r => r.categoria === categoria);
+}
 
+function resumoCategoria(categoria) {
+  const itens = itensCategoria(categoria);
   return {
     total: itens.length,
-    acertos: itens.filter(r => r.correto).length,
+    tipicos: itens.filter(r => r.tipicoCorreto).length,
+    indicadores: itens.filter(r => r.indicadorRG).length,
     naoViu: itens.filter(r => r.informado === null).length
   };
 }
 
 function tempoMedioCategoria(categoria) {
-  const itens = categoria === "vermelho-verde"
-    ? respostas.filter(r => ehVermelhoVerde(r.categoria))
-    : respostas.filter(r => r.categoria === categoria);
+  const itens = itensCategoria(categoria);
   if (!itens.length) return 0;
-  return itens.reduce((soma,r)=>soma+r.tempoMs,0)/itens.length/1000;
+  return itens.reduce((soma, r) => soma + r.tempoMs, 0) / itens.length / 1000;
 }
 
 function linhaResultado(titulo, categoria) {
   const r = resumoCategoria(categoria);
-  const pct = r.total ? Math.round((r.acertos / r.total) * 100) : 0;
+  const pct = r.total ? Math.round((r.tipicos / r.total) * 100) : 0;
   const tempo = tempoMedioCategoria(categoria).toFixed(1).replace(".", ",");
 
   return `
     <div class="resultado-grupo">
       <div class="resultado-grupo-topo">
         <strong>${titulo}</strong>
-        <span>${r.acertos}/${r.total} • ${pct}%</span>
+        <span>${r.tipicos}/${r.total} • ${pct}% padrão típico</span>
       </div>
       <div class="resultado-barra">
         <div class="resultado-barra-preenchimento" style="width:${pct}%"></div>
       </div>
-      <small>Tempo médio de resposta: ${tempo} s</small>
+      <small>Tempo médio: ${tempo} s</small>
     </div>
   `;
 }
 
-function percentualCategoria(categoria) {
+function percentualTipico(categoria) {
   const r = resumoCategoria(categoria);
-  return r.total ? (r.acertos / r.total) * 100 : 0;
+  return r.total ? (r.tipicos / r.total) * 100 : 0;
+}
+
+function totalIndicadoresRG() {
+  return itensCategoria("vermelho-verde").filter(r => r.indicadorRG).length;
 }
 
 function gerarConclusao() {
-  const controle = percentualCategoria("controle");
-  const vermelhoVerde = percentualCategoria("vermelho-verde");
-  const azulAmarelo = percentualCategoria("azul-amarelo");
-  const tons = percentualCategoria("tons");
+  const controle = percentualTipico("controle");
+  const azul = percentualTipico("azul-amarelo");
+  const tons = percentualTipico("tons");
+  const indicadores = totalIndicadoresRG();
 
-  // Se até as placas de controle apresentarem dificuldade,
-  // evitamos interpretar o resultado cromático.
   if (controle < 75) {
     return {
       classe: "status-inconclusivo",
       icone: "?",
       titulo: "Resultado inconclusivo",
       texto:
-        "Houve dificuldade também nas placas de controle. Recomendamos repetir o teste verificando brilho, iluminação, filtros de cor da tela e se as instruções foram compreendidas."
+        "Houve dificuldade nas placas de controle. Repita o teste verificando brilho, iluminação, filtros de cor e compreensão das instruções."
     };
   }
 
-  const grupos = [
-    { nome: "vermelho-verde", valor: vermelhoVerde },
-    { nome: "azul-amarelo", valor: azulAmarelo },
-    { nome: "distinção de tonalidades", valor: tons }
-  ];
-
-  const mediaCromatica = (vermelhoVerde * 15 + azulAmarelo * 3 + tons * 3) / 21;
-
-  const pior = [...grupos].sort((a, b) => a.valor - b.valor)[0];
-
-  if (mediaCromatica >= 80 && pior.valor >= 67) {
+  // 15 placas experimentais no eixo vermelho-verde.
+  if (indicadores >= 5) {
     return {
-      classe: "status-verde",
-      icone: "✓",
-      titulo: "Percepção de cores dentro do esperado",
+      classe: "status-vermelho",
+      icone: "!",
+      titulo: "Padrão experimental vermelho-verde elevado",
       texto:
-        "Seu desempenho foi alto nas combinações avaliadas e não houve dificuldade relevante nos grupos apresentados."
+        `Foram registrados ${indicadores} comportamentos compatíveis com o padrão experimental vermelho-verde. Isso não confirma daltonismo e deve ser interpretado apenas como triagem educativa.`
     };
   }
 
-  if (mediaCromatica >= 55) {
+  if (indicadores >= 2 || azul < 67 || tons < 67) {
     return {
       classe: "status-amarelo",
       icone: "!",
       titulo: "Possível dificuldade na percepção de cores",
       texto:
-        `Foram observadas algumas dificuldades, principalmente no grupo ${pior.nome}. Vale repetir o teste em boas condições de tela e iluminação.`
+        `Foram registrados ${indicadores} indicadores experimentais no eixo vermelho-verde e/ou dificuldade em outras categorias. Recomenda-se repetir em boas condições de tela e iluminação.`
     };
   }
 
-  let detalhe;
-  if (vermelhoVerde < 55 && azulAmarelo < 55) {
-    detalhe = "As dificuldades apareceram em diferentes grupos de cores.";
-  } else if (vermelhoVerde <= azulAmarelo && vermelhoVerde <= tons) {
-    detalhe = "A maior dificuldade foi observada no grupo vermelho-verde.";
-  } else if (azulAmarelo <= vermelhoVerde && azulAmarelo <= tons) {
-    detalhe = "A maior dificuldade foi observada no grupo azul-amarelo.";
-  } else {
-    detalhe = "A maior dificuldade foi observada na distinção de tonalidades.";
-  }
-
   return {
-    classe: "status-vermelho",
-    icone: "!",
-    titulo: "Dificuldade significativa na percepção de cores",
+    classe: "status-verde",
+    icone: "✓",
+    titulo: "Percepção de cores dentro do esperado",
     texto:
-      `${detalhe} Este resultado não confirma daltonismo, mas uma dificuldade semelhante no cotidiano pode justificar avaliação por um profissional da visão.`
+      "O padrão de respostas ficou predominantemente dentro do esperado para esta experiência digital."
   };
 }
 
-function explicacaoMaiorDificuldade() {
-  const grupos = [
-    { categoria: "vermelho-verde", nome: "Vermelho-verde", valor: percentualCategoria("vermelho-verde") },
-    { categoria: "azul-amarelo", nome: "Azul-amarelo", valor: percentualCategoria("azul-amarelo") },
-    { categoria: "tons", nome: "Tonalidades", valor: percentualCategoria("tons") }
-  ];
-
-  const pior = grupos.sort((a, b) => a.valor - b.valor)[0];
-
-  const textos = {
-    "vermelho-verde":
-      "Este grupo utiliza combinações destinadas a explorar diferenças de percepção entre tons próximos das famílias vermelho-verde. Dificuldades aqui não determinam um tipo específico de daltonismo.",
-    "azul-amarelo":
-      "Este grupo explora combinações relacionadas à distinção entre tons das famílias azul-amarelo. Alterações nesse eixo são menos comuns e um teste digital não fornece diagnóstico.",
-    "tons":
-      "Este grupo avalia a capacidade de separar tonalidades próximas. Brilho, contraste e qualidade da tela podem influenciar bastante esse resultado."
-  };
+function cardPadraoRG() {
+  const d = resumoCategoria("desaparecimento");
+  const t = resumoCategoria("transformacao");
+  const o = resumoCategoria("oculto");
+  const total = totalIndicadoresRG();
 
   return `
-    <div class="explicacao-resultado">
-      <span>ANÁLISE DO TESTE</span>
-      <h4>Grupo com maior dificuldade: ${pior.nome}</h4>
-      <p>${textos[pior.categoria]}</p>
+    <div class="padrao-rg-v18">
+      <span>ANÁLISE EXPERIMENTAL VERMELHO-VERDE</span>
+      <h4>${total} indicador(es) em 15 placas</h4>
+      <p>
+        Desaparecimento: <strong>${d.indicadores}/${d.total}</strong> •
+        Transformação: <strong>${t.indicadores}/${t.total}</strong> •
+        Número oculto: <strong>${o.indicadores}/${o.total}</strong>
+      </p>
+      <small>
+        Em “número oculto”, não identificar nenhum número conta como padrão típico experimental;
+        identificar o número mascarado é registrado como indicador vermelho-verde.
+      </small>
     </div>
   `;
 }
@@ -484,12 +548,9 @@ function formatarTempoTotal(ms) {
   const totalSegundos = Math.round(ms / 1000);
   const minutos = Math.floor(totalSegundos / 60);
   const segundos = totalSegundos % 60;
-
-  if (minutos === 0) {
-    return `${segundos} s`;
-  }
-
-  return `${minutos} min ${String(segundos).padStart(2, "0")} s`;
+  return minutos === 0
+    ? `${segundos} s`
+    : `${minutos} min ${String(segundos).padStart(2, "0")} s`;
 }
 
 function finalizarTeste() {
@@ -502,14 +563,16 @@ function finalizarTeste() {
   barraProgresso.style.width = "100%";
 
   const conclusao = gerarConclusao();
+  const totalMs = respostas.reduce((soma, r) => soma + r.tempoMs, 0);
 
   resultado.innerHTML = `
     <h3>Resultado educativo</h3>
+
     ${linhaResultado("Placas de controle", "controle")}
-    ${linhaResultado("Eixo vermelho-verde (total)", "vermelho-verde")}
+    ${cardPadraoRG()}
 
     <div class="subtipos-v16">
-      <strong>Comportamentos experimentais do eixo vermelho-verde</strong>
+      <strong>Comportamentos pseudoisocromáticos experimentais</strong>
       ${linhaResultado("Desaparecimento", "desaparecimento")}
       ${linhaResultado("Transformação", "transformacao")}
       ${linhaResultado("Número oculto", "oculto")}
@@ -520,23 +583,15 @@ function finalizarTeste() {
 
     <div class="tempo-geral">
       ⏱️ <strong>Tempo médio geral:</strong>
-      ${(respostas.reduce((soma, r) => soma + r.tempoMs, 0) / respostas.length / 1000).toFixed(1).replace(".", ",")} s por placa
+      ${(totalMs / respostas.length / 1000).toFixed(1).replace(".", ",")} s por placa
       <br>
-      ⏳ <strong>Tempo total do teste:</strong>
-      ${formatarTempoTotal(respostas.reduce((soma, r) => soma + r.tempoMs, 0))}
+      ⏳ <strong>Tempo total do teste:</strong> ${formatarTempoTotal(totalMs)}
     </div>
 
-    ${explicacaoMaiorDificuldade()}
-
     <p>
-      O desempenho mostra apenas como você respondeu às combinações de cores
-      utilizadas nesta experiência digital.
-    </p>
-    <p>
-      <strong>Este projeto não realiza diagnóstico de daltonismo.</strong>
-      Tela, brilho, iluminação, filtros de cor e características do dispositivo
-      podem alterar o resultado. Dificuldades percebidas no cotidiano devem ser
-      avaliadas por um profissional da visão.
+      <strong>Importante:</strong> esta versão usa comportamentos pseudoisocromáticos
+      gerados experimentalmente. Ela não reproduz o teste clínico de Ishihara e
+      não realiza diagnóstico.
     </p>
 
     <div class="card-conclusao ${conclusao.classe}">
@@ -574,7 +629,6 @@ respostaInput.addEventListener("keydown", event => {
   }
 });
 
-
 // TEMA CLARO / ESCURO
 function aplicarTema(tema) {
   const claro = tema === "claro";
@@ -583,7 +637,6 @@ function aplicarTema(tema) {
   temaIcone.textContent = claro ? "🌙" : "☀️";
   temaTexto.textContent = claro ? "Modo escuro" : "Modo claro";
   temaToggle.setAttribute("aria-pressed", claro ? "true" : "false");
-
   localStorage.setItem("colorvisao-tema", tema);
 }
 
@@ -591,11 +644,10 @@ const temaSalvo = localStorage.getItem("colorvisao-tema") || "escuro";
 aplicarTema(temaSalvo);
 
 temaToggle.addEventListener("click", () => {
-  const estaClaro = document.body.classList.contains("tema-claro");
-  aplicarTema(estaClaro ? "escuro" : "claro");
+  aplicarTema(document.body.classList.contains("tema-claro") ? "escuro" : "claro");
 });
 
-// Estado inicial.
+// Estado inicial
 ctx.fillStyle = "#d4b879";
 ctx.beginPath();
 ctx.arc(250, 250, 238, 0, Math.PI * 2);
