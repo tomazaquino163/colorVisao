@@ -17,9 +17,11 @@ const temaTexto = document.getElementById("temaTexto");
 
 const PLANO = [
   ...Array(4).fill("controle"),
-  ...Array(8).fill("vermelho-verde"),
-  ...Array(4).fill("azul-amarelo"),
-  ...Array(4).fill("tons")
+  ...Array(6).fill("desaparecimento"),
+  ...Array(5).fill("transformacao"),
+  ...Array(4).fill("oculto"),
+  ...Array(3).fill("azul-amarelo"),
+  ...Array(3).fill("tons")
 ];
 
 const TOTAL_QUESTOES = PLANO.length;
@@ -89,6 +91,10 @@ const paletas = {
     }
   ]
 };
+paletas.desaparecimento = paletas["vermelho-verde"];
+paletas.transformacao = paletas["vermelho-verde"];
+paletas.oculto = paletas["vermelho-verde"];
+
 
 function embaralhar(lista) {
   const copia = [...lista];
@@ -141,6 +147,9 @@ function escolherCor(lista) {
   return lista[Math.floor(Math.random() * lista.length)];
 }
 
+function ehVermelhoVerde(categoria) {
+  return ["vermelho-verde","desaparecimento","transformacao","oculto"].includes(categoria);
+}
 function escolherPaleta(categoria) {
   const variantes = paletas[categoria];
   return variantes[Math.floor(Math.random() * variantes.length)];
@@ -333,17 +342,19 @@ function registrarResposta(valor) {
 }
 
 function resumoCategoria(categoria) {
-  const itens = respostas.filter(r => r.categoria === categoria);
-  return {
-    total: itens.length,
-    acertos: itens.filter(r => r.correto).length
-  };
+  const itens = categoria === "vermelho-verde"
+    ? respostas.filter(r => ehVermelhoVerde(r.categoria))
+    : respostas.filter(r => r.categoria === categoria);
+  return { total: itens.length, acertos: itens.filter(r => r.acertou).length,
+           naoViu: itens.filter(r => r.resposta === null).length };
 }
 
 function tempoMedioCategoria(categoria) {
-  const itens = respostas.filter(r => r.categoria === categoria);
+  const itens = categoria === "vermelho-verde"
+    ? respostas.filter(r => ehVermelhoVerde(r.categoria))
+    : respostas.filter(r => r.categoria === categoria);
   if (!itens.length) return 0;
-  return itens.reduce((soma, r) => soma + r.tempoMs, 0) / itens.length / 1000;
+  return itens.reduce((soma,r)=>soma+r.tempoMs,0)/itens.length/1000;
 }
 
 function linhaResultado(titulo, categoria) {
@@ -394,8 +405,7 @@ function gerarConclusao() {
     { nome: "distinção de tonalidades", valor: tons }
   ];
 
-  const mediaCromatica =
-    (vermelhoVerde * 8 + azulAmarelo * 4 + tons * 4) / 16;
+  const mediaCromatica = (vermelhoVerde * 15 + azulAmarelo * 3 + tons * 3) / 21;
 
   const pior = [...grupos].sort((a, b) => a.valor - b.valor)[0];
 

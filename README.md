@@ -1,4 +1,4 @@
-# ColorVisão v15
+# ColorVisão v16
 
 Projeto escolar educativo sobre percepção de cores, daltonismo e acessibilidade.
 
@@ -136,3 +136,9 @@ não possuem validação clínica e não devem ser usadas para diagnóstico méd
 - Mantida animação sutil sem permitir que pontos atravessem a máscara.
 - Aviso explícito: método educativo pseudoisocromático experimental; não reproduz nem substitui Ishihara clínico.
 - Cache-busting atualizado para `?v=15`.
+
+## Novidades da v16
+- 25 placas: 4 controle, 6 desaparecimento, 5 transformação, 4 número oculto, 3 azul-amarelo e 3 tonalidades.
+- Novos comportamentos vermelho-verde experimentais no resultado.
+- Não reproduz nem substitui o Ishihara clínico.
+- Cache atualizado para ?v=16.

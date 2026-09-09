@@ -1357,3 +1357,8 @@ body.tema-claro .metodo-v15 {
   border-color: rgba(39,125,98,.18);
   background: rgba(39,125,98,.055);
 }
+
+.subtipos-v16{margin:16px 0 22px;padding:16px;border:1px solid rgba(99,230,190,.18);border-radius:16px;background:rgba(99,230,190,.045)}
+.subtipos-v16>strong{display:block;margin-bottom:8px;color:var(--destaque)}
+.subtipos-v16 .resultado-grupo{margin:10px 0}
+body.tema-claro .subtipos-v16{border-color:rgba(39,125,98,.16);background:rgba(39,125,98,.04)}
