@@ -171,6 +171,18 @@ function escolherCalibracao(lista) {
   return lista[Math.floor(Math.random() * lista.length)];
 }
 
+function corMedia(hex1, hex2) {
+  const limpar = h => h.replace("#", "");
+  const a = limpar(hex1);
+  const b = limpar(hex2);
+
+  const c1 = [parseInt(a.slice(0,2),16), parseInt(a.slice(2,4),16), parseInt(a.slice(4,6),16)];
+  const c2 = [parseInt(b.slice(0,2),16), parseInt(b.slice(2,4),16), parseInt(b.slice(4,6),16)];
+
+  const mix = c1.map((v, i) => Math.round((v + c2[i]) / 2));
+  return `rgb(${mix[0]}, ${mix[1]}, ${mix[2]})`;
+}
+
 function criarPonto(x, y, assinatura, cor) {
   pontos.push({
     baseX: x,
@@ -229,16 +241,30 @@ function corParaPonto(categoria, x, y) {
   }
 
   if (categoria === "transformacao") {
-    // Dois canais se misturam na mesma placa:
-    // A) número típico por desaparecimento (~57% dos pontos)
-    // B) número alternativo por padrão oculto (~43% dos pontos)
+    // v20: refinamento das placas de transformação.
+    // Em vez de uma mistura totalmente aleatória, usamos a assinatura do ponto:
+    // 10 = região exclusiva do número típico
+    // 01 = região exclusiva do número alternativo
+    // 11 = intersecção entre os dois números
+    // 00 = fundo
     //
-    // Em visão típica, A tende a dominar. Em simulação protan/deutan,
-    // A perde contraste e B tende a ganhar organização perceptual.
-    if (Math.random() < 0.57) {
-      return corDesaparecimento(q, dentroA);
+    // Isso deixa o número típico mais estável para visão comum,
+    // mas ainda preserva um canal alternativo experimental.
+    const assinatura = `${dentroA ? 1 : 0}${dentroB ? 1 : 0}`;
+
+    if (assinatura === "10") {
+      return Math.random() < 0.80 ? corDesaparecimento(q, true) : corOculta(q, false);
     }
-    return corOculta(q, dentroB);
+
+    if (assinatura === "01") {
+      return Math.random() < 0.68 ? corOculta(q, true) : corDesaparecimento(q, false);
+    }
+
+    if (assinatura === "11") {
+      return Math.random() < 0.56 ? corDesaparecimento(q, true) : corOculta(q, true);
+    }
+
+    return Math.random() < 0.70 ? corDesaparecimento(q, false) : corOculta(q, false);
   }
 
   if (categoria === "azul-amarelo") {
@@ -256,8 +282,8 @@ function gerarPontos(categoria) {
   else if (categoria === "desaparecimento") corBaseAtual = q.calibracaoDesap.base;
   else if (categoria === "oculto") corBaseAtual = q.calibracaoOculto.base;
   else if (categoria === "transformacao") {
-    // Média visual aproximada entre os dois canais.
-    corBaseAtual = q.calibracaoOculto.base;
+    // v20: cor-base híbrida entre o canal típico e o alternativo.
+    corBaseAtual = corMedia(q.calibracaoDesap.base, q.calibracaoOculto.base);
   }
   else if (categoria === "azul-amarelo") corBaseAtual = PALETAS.azul.base;
   else corBaseAtual = PALETAS.tons.base;
@@ -266,7 +292,8 @@ function gerarPontos(categoria) {
   // poderiam revelar o contorno do número por diferenças geométricas.
   const passo =
     categoria === "controle" ? 12 :
-    (categoria === "oculto" || categoria === "transformacao") ? 9.1 : 10.2;
+    categoria === "transformacao" ? 8.8 :
+    categoria === "oculto" ? 9.1 : 10.2;
 
   for (let y = 22; y < 478; y += passo) {
     for (let x = 22; x < 478; x += passo) {

@@ -1,4 +1,4 @@
-# ColorVisão v19
+# ColorVisão v20
 
 Projeto escolar educativo sobre percepção de cores, daltonismo e acessibilidade.
 
@@ -182,3 +182,17 @@ Os pares cromáticos foram projetados experimentalmente por algoritmo e não sã
 “Calibrada” nesta versão significa calibração algorítmica contra modelos matemáticos simplificados.
 Não significa validação clínica. O próximo passo correto é comparar sistematicamente resultados de
 participantes com visão típica e participantes com deficiência de visão de cores conhecida.
+
+## Novidades da v20 — refinamento das placas de transformação
+
+- Refinamento específico do comportamento **transformação**.
+- O motor agora leva em conta a região do ponto em relação aos dois números:
+  - região do número típico,
+  - região do número alternativo,
+  - intersecção,
+  - fundo.
+- O padrão típico ficou mais estável para visão comum.
+- O canal alternativo experimental foi mantido, mas de forma menos caótica.
+- Densidade das placas de transformação levemente aumentada.
+- Cor-base das placas de transformação agora mistura as bases dos dois canais.
+- Cache-busting atualizado para `?v=20`.
