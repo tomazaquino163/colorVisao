@@ -56,36 +56,46 @@ const PALETAS = {
   }
 };
 
-// DESAPARECIMENTO:
-// cores diferentes em visão típica, mas escolhidas para se aproximarem
-// em uma simulação matemática simplificada de deutan.
-// Isso é experimental, não uma calibração clínica.
-const DESAPARECIMENTO = {
-  fundo: ["#c75c68", "#c26866", "#be6168", "#c96a6b", "#b95d64"],
-  figura: ["#9ba346", "#a2a94c", "#95a043", "#a8ad51", "#9ca548"],
-  base: "#b78c5f"
-};
+// CALIBRAÇÃO ALGORÍTMICA v19
+// As paletas abaixo foram selecionadas procurando dois comportamentos:
+// 1) DESAPARECIMENTO: alta diferença cromática para visão típica e
+//    forte aproximação após simulações simplificadas protan/deutan.
+// 2) NÚMERO OCULTO: quatro cores parecem ruído misturado para visão típica,
+//    mas formam dois agrupamentos mais separados após simulação protan/deutan.
+//
+// Isso NÃO é calibração clínica e NÃO reproduz as placas originais de Ishihara.
 
-// NÚMERO OCULTO (reverse / hidden experimental):
-// dentro e fora usam DOIS tons bastante diferentes para uma pessoa
-// tricromata, produzindo "ruído cromático"; em simulação deutan, cada par
-// tende a se agrupar em clusters diferentes, podendo revelar a máscara.
-const OCULTO = {
-  figura: ["#c64e57", "#9d993f"],   // vermelho + oliva
-  fundo:  ["#3caf97", "#665cb5"],   // verde-azulado + violeta
-  base: "#8b817d"
-};
+const DESAPARECIMENTO_BANCO = [
+  { figura:"#758610", fundo:"#ad5966", base:"#92705c" },
+  { figura:"#9eaa38", fundo:"#d87b82", base:"#b9935f" },
+  { figura:"#9fbb01", fundo:"#d5997f", base:"#b8aa51" },
+  { figura:"#899a51", fundo:"#bf6e84", base:"#a78369" },
+  { figura:"#829404", fundo:"#b6725c", base:"#9a8250" },
+  { figura:"#97a434", fundo:"#cf8587", base:"#b29662" }
+];
 
-// TRANSFORMAÇÃO:
-// número A é construído pelo princípio de desaparecimento;
-// número B é construído pelo princípio de número oculto.
-// A intenção é que respostas diferentes possam surgir de padrões cromáticos distintos.
-const TRANSFORMACAO = {
-  tipico: ["#9ba346", "#a2a94c", "#95a043"],
-  fundo: ["#c75c68", "#c26866", "#be6168"],
-  alternativo: ["#3caf97", "#665cb5"],
-  base: "#aa826a"
-};
+const OCULTO_BANCO = [
+  {
+    grupoA:["#3c88f1","#5863f8"],
+    grupoB:["#8591f8","#8a6cf7"],
+    dentroA:0.59, foraA:0.41, base:"#747be8"
+  },
+  {
+    grupoA:["#6a9cc8","#8066ce"],
+    grupoB:["#6169e1","#269edc"],
+    dentroA:0.59, foraA:0.41, base:"#657fcf"
+  },
+  {
+    grupoA:["#4a8eb2","#795ac4"],
+    grupoB:["#944db2","#6c979f"],
+    dentroA:0.58, foraA:0.42, base:"#7476ae"
+  },
+  {
+    grupoA:["#7997bd","#a236ce"],
+    grupoB:["#6e81d7","#8164e3"],
+    dentroA:0.59, foraA:0.41, base:"#8175cf"
+  }
+];
 
 function embaralhar(lista) {
   const copia = [...lista];
@@ -138,90 +148,140 @@ function escolher(lista) {
   return lista[Math.floor(Math.random() * lista.length)];
 }
 
-function criarPonto(x, y, grupo, cor) {
+function limitar(v, min = 0, max = 255) {
+  return Math.max(min, Math.min(max, v));
+}
+
+function variarHex(hex, amplitude = 5) {
+  const limpo = hex.replace("#", "");
+  const r = parseInt(limpo.slice(0, 2), 16);
+  const g = parseInt(limpo.slice(2, 4), 16);
+  const b = parseInt(limpo.slice(4, 6), 16);
+
+  const variacao = () => Math.round((Math.random() * 2 - 1) * amplitude);
+
+  const rr = limitar(r + variacao());
+  const gg = limitar(g + variacao());
+  const bb = limitar(b + variacao());
+
+  return `rgb(${rr}, ${gg}, ${bb})`;
+}
+
+function escolherCalibracao(lista) {
+  return lista[Math.floor(Math.random() * lista.length)];
+}
+
+function criarPonto(x, y, assinatura, cor) {
   pontos.push({
     baseX: x,
     baseY: y,
-    grupo,
-    raio: 4.3 + Math.random() * 2.2,
+    assinatura,
+    raio: 4.15 + Math.random() * 2.15,
     cor,
     faseX: Math.random() * Math.PI * 2,
     faseY: Math.random() * Math.PI * 2,
     velocidade: 0.00065 + Math.random() * 0.00055,
-    amplitude: 0.65 + Math.random() * 1.45
+    amplitude: 0.55 + Math.random() * 1.25
   });
 }
 
-function grupoNoPonto(categoria, x, y) {
+function assinaturaPonto(categoria, x, y) {
   const a = naMascara(mascaraA, x, y);
   const b = naMascara(mascaraB, x, y);
 
   if (categoria === "transformacao") {
-    if (a && !b) return "tipico";
-    if (b && !a) return "alternativo";
-    if (a && b) return "intersecao";
-    return "fundo";
+    return `${a ? 1 : 0}${b ? 1 : 0}`;
   }
 
-  return a ? "figura" : "fundo";
+  return a ? "1" : "0";
 }
 
-function corParaGrupo(categoria, grupo) {
+function corOculta(q, dentro) {
+  const cfg = q.calibracaoOculto;
+  const pGrupoA = dentro ? cfg.dentroA : cfg.foraA;
+  const grupo = Math.random() < pGrupoA ? cfg.grupoA : cfg.grupoB;
+  return variarHex(escolher(grupo), 4);
+}
+
+function corDesaparecimento(q, dentro) {
+  const cfg = q.calibracaoDesap;
+  return variarHex(dentro ? cfg.figura : cfg.fundo, 5);
+}
+
+function corParaPonto(categoria, x, y) {
+  const q = perguntas[questaoAtual];
+  const dentroA = naMascara(mascaraA, x, y);
+  const dentroB = naMascara(mascaraB, x, y);
+
   if (categoria === "controle") {
-    return escolher(grupo === "figura" ? PALETAS.controle.figura : PALETAS.controle.fundo);
+    return escolher(dentroA ? PALETAS.controle.figura : PALETAS.controle.fundo);
   }
 
   if (categoria === "desaparecimento") {
-    return escolher(grupo === "figura" ? DESAPARECIMENTO.figura : DESAPARECIMENTO.fundo);
+    return corDesaparecimento(q, dentroA);
   }
 
   if (categoria === "oculto") {
-    // Cada região usa uma mistura de duas cores; isso reduz a "silhueta por uma cor só".
-    return escolher(grupo === "figura" ? OCULTO.figura : OCULTO.fundo);
+    // Figura e fundo usam AS MESMAS quatro cores.
+    // O que muda é apenas a proporção entre dois agrupamentos de cor.
+    // Isso reduz muito a silhueta visível para visão típica.
+    return corOculta(q, dentroA);
   }
 
   if (categoria === "transformacao") {
-    if (grupo === "tipico") return escolher(TRANSFORMACAO.tipico);
-    if (grupo === "alternativo") return escolher(TRANSFORMACAO.alternativo);
-    if (grupo === "intersecao") {
-      return Math.random() < 0.5 ? escolher(TRANSFORMACAO.tipico) : escolher(TRANSFORMACAO.alternativo);
+    // Dois canais se misturam na mesma placa:
+    // A) número típico por desaparecimento (~57% dos pontos)
+    // B) número alternativo por padrão oculto (~43% dos pontos)
+    //
+    // Em visão típica, A tende a dominar. Em simulação protan/deutan,
+    // A perde contraste e B tende a ganhar organização perceptual.
+    if (Math.random() < 0.57) {
+      return corDesaparecimento(q, dentroA);
     }
-    return escolher(TRANSFORMACAO.fundo);
+    return corOculta(q, dentroB);
   }
 
   if (categoria === "azul-amarelo") {
-    return escolher(grupo === "figura" ? PALETAS.azul.figura : PALETAS.azul.fundo);
+    return escolher(dentroA ? PALETAS.azul.figura : PALETAS.azul.fundo);
   }
 
-  return escolher(grupo === "figura" ? PALETAS.tons.figura : PALETAS.tons.fundo);
+  return escolher(dentroA ? PALETAS.tons.figura : PALETAS.tons.fundo);
 }
 
 function gerarPontos(categoria) {
   pontos = [];
+  const q = perguntas[questaoAtual];
 
   if (categoria === "controle") corBaseAtual = PALETAS.controle.base;
-  else if (categoria === "desaparecimento") corBaseAtual = DESAPARECIMENTO.base;
-  else if (categoria === "oculto") corBaseAtual = OCULTO.base;
-  else if (categoria === "transformacao") corBaseAtual = TRANSFORMACAO.base;
+  else if (categoria === "desaparecimento") corBaseAtual = q.calibracaoDesap.base;
+  else if (categoria === "oculto") corBaseAtual = q.calibracaoOculto.base;
+  else if (categoria === "transformacao") {
+    // Média visual aproximada entre os dois canais.
+    corBaseAtual = q.calibracaoOculto.base;
+  }
   else if (categoria === "azul-amarelo") corBaseAtual = PALETAS.azul.base;
   else corBaseAtual = PALETAS.tons.base;
 
-  const passo = categoria === "controle" ? 12 : 10.2;
+  // Oculto e transformação usam densidade maior para reduzir espaços que
+  // poderiam revelar o contorno do número por diferenças geométricas.
+  const passo =
+    categoria === "controle" ? 12 :
+    (categoria === "oculto" || categoria === "transformacao") ? 9.1 : 10.2;
 
-  for (let y = 24; y < 476; y += passo) {
-    for (let x = 24; x < 476; x += passo) {
-      const jitter = passo * 0.68;
+  for (let y = 22; y < 478; y += passo) {
+    for (let x = 22; x < 478; x += passo) {
+      const jitter = passo * 0.72;
       const jx = x + (Math.random() - 0.5) * jitter;
       const jy = y + (Math.random() - 0.5) * jitter;
 
       if (!dentroPlaca(jx, jy, 5)) continue;
 
-      const grupo = grupoNoPonto(categoria, jx, jy);
-      criarPonto(jx, jy, grupo, corParaGrupo(categoria, grupo));
+      const assinatura = assinaturaPonto(categoria, jx, jy);
+      criarPonto(jx, jy, assinatura, corParaPonto(categoria, jx, jy));
     }
   }
 
-  // Controle recebe reforço leve para garantir leitura.
+  // Somente controle recebe reforço de densidade na figura.
   if (categoria === "controle") {
     let adicionados = 0;
     let tentativas = 0;
@@ -230,7 +290,10 @@ function gerarPontos(categoria) {
       const x = 90 + Math.random() * 320;
       const y = 105 + Math.random() * 290;
       if (dentroPlaca(x, y, 6) && naMascara(mascaraA, x, y)) {
-        criarPonto(x, y, "figura", escolher(PALETAS.controle.figura));
+        criarPonto(
+          x, y, "1",
+          escolher(PALETAS.controle.figura)
+        );
         adicionados++;
       }
     }
@@ -243,6 +306,9 @@ function gerarQuestao() {
   q.numeroTipico = gerarNumeroUnico();
   q.numeroAlternativo = null;
 
+  q.calibracaoDesap = escolherCalibracao(DESAPARECIMENTO_BANCO);
+  q.calibracaoOculto = escolherCalibracao(OCULTO_BANCO);
+
   mascaraA = criarMascara(q.numeroTipico);
   mascaraB = null;
 
@@ -251,7 +317,6 @@ function gerarQuestao() {
     mascaraB = criarMascara(q.numeroAlternativo);
   }
 
-  // Em placa oculta, o número existe na máscara, mas a resposta típica esperada é "não vejo".
   if (q.categoria === "oculto") {
     q.numeroAlternativo = q.numeroTipico;
   }
@@ -278,7 +343,7 @@ function desenharPlacaAnimada(tempo) {
     let y = p.baseY + Math.cos(tempo * (p.velocidade * 0.91) + p.faseY) * p.amplitude;
 
     // Preserva a região lógica do ponto durante a animação.
-    if (grupoNoPonto(categoria, x, y) !== p.grupo) {
+    if (assinaturaPonto(categoria, x, y) !== p.assinatura) {
       x = p.baseX;
       y = p.baseY;
     }
@@ -589,9 +654,9 @@ function finalizarTeste() {
     </div>
 
     <p>
-      <strong>Importante:</strong> esta versão usa comportamentos pseudoisocromáticos
-      gerados experimentalmente. Ela não reproduz o teste clínico de Ishihara e
-      não realiza diagnóstico.
+      <strong>Importante:</strong> a v19 usa paletas selecionadas por calibração algorítmica
+      contra simulações simplificadas de visão protan/deutan. Ainda assim, as placas são
+      experimentais, não reproduzem o teste clínico de Ishihara e não realizam diagnóstico.
     </p>
 
     <div class="card-conclusao ${conclusao.classe}">

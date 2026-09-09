@@ -1,4 +1,4 @@
-# ColorVisão v18
+# ColorVisão v19
 
 Projeto escolar educativo sobre percepção de cores, daltonismo e acessibilidade.
 
@@ -163,3 +163,22 @@ não possuem validação clínica e não devem ser usadas para diagnóstico méd
 
 ### Limitação
 Os pares cromáticos foram projetados experimentalmente por algoritmo e não são placas clínicas validadas. A resposta de participantes reais deve ser usada para calibrar as próximas versões.
+
+## Novidades da v19 — calibração algorítmica
+
+- Motor de número oculto redesenhado.
+- Figura e fundo das placas ocultas agora usam as mesmas quatro cores; muda apenas a proporção entre dois agrupamentos.
+- As combinações foram selecionadas por busca matemática para:
+  - parecerem mais misturadas para visão típica;
+  - agruparem-se de forma mais distinta em simulações simplificadas protan/deutan.
+- Transformação agora mistura dois canais:
+  - número típico por desaparecimento;
+  - número alternativo por padrão oculto.
+- As placas ocultas e de transformação usam maior densidade de pontos para reduzir pistas geométricas.
+- Banco com várias calibrações é sorteado a cada questão.
+- Cache-busting atualizado para `?v=19`.
+
+### Importante
+“Calibrada” nesta versão significa calibração algorítmica contra modelos matemáticos simplificados.
+Não significa validação clínica. O próximo passo correto é comparar sistematicamente resultados de
+participantes com visão típica e participantes com deficiência de visão de cores conhecida.

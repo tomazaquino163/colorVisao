@@ -1398,3 +1398,19 @@ body.tema-claro .padrao-rg-v18 {
   border-color: rgba(40,124,175,.18);
   background: linear-gradient(135deg, rgba(40,124,175,.07), rgba(39,125,98,.05));
 }
+
+
+/* ColorVisão v19 — calibração algorítmica */
+.metodo-v15 strong::after {
+  content: "  •  CALIBRADO POR SIMULAÇÃO";
+  color: var(--destaque2);
+  font-size: .68rem;
+  letter-spacing: .06em;
+}
+
+@media (max-width: 540px) {
+  .metodo-v15 strong::after {
+    display: block;
+    margin-top: 3px;
+  }
+}
