@@ -1325,3 +1325,35 @@ body.tema-claro .iris-faixa {
     flex-basis: 100%;
   }
 }
+
+
+/* ColorVisão v15 — motor pseudoisocromático experimental */
+.metodo-v15 {
+  width: min(100%, 520px);
+  margin: 0 auto 12px;
+  padding: 10px 13px;
+  border: 1px solid rgba(99,230,190,.20);
+  border-radius: 13px;
+  background: rgba(99,230,190,.055);
+  text-align: left;
+}
+
+.metodo-v15 strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--destaque);
+  font-size: .78rem;
+  letter-spacing: .025em;
+}
+
+.metodo-v15 span {
+  display: block;
+  color: var(--muted);
+  font-size: .72rem;
+  line-height: 1.35;
+}
+
+body.tema-claro .metodo-v15 {
+  border-color: rgba(39,125,98,.18);
+  background: rgba(39,125,98,.055);
+}

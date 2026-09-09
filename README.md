@@ -1,4 +1,4 @@
-# ColorVisão v14
+# ColorVisão v15
 
 Projeto escolar educativo sobre percepção de cores, daltonismo e acessibilidade.
 
@@ -124,3 +124,15 @@ não possuem validação clínica e não devem ser usadas para diagnóstico méd
 - Identidade reforçada no card institucional da escola.
 - Layout responsivo preservado.
 - Cache-busting atualizado para `?v=14`.
+
+## Novidades da v15 — motor pseudoisocromático experimental
+
+- Reformulação do gerador após teste com participante com daltonismo.
+- 20 placas: 4 controle, 8 vermelho-verde, 4 azul-amarelo e 4 tonalidades.
+- Quatro variantes de paleta vermelho-verde com luminâncias mais próximas.
+- Figura e fundo agora usam densidade equivalente de pontos nas placas cromáticas.
+- Removido o reforço de pontos dentro do número nas placas cromáticas, reduzindo pistas de forma/densidade.
+- Fundo da placa passa a acompanhar uma cor neutra da paleta, evitando vazamentos dourados.
+- Mantida animação sutil sem permitir que pontos atravessem a máscara.
+- Aviso explícito: método educativo pseudoisocromático experimental; não reproduz nem substitui Ishihara clínico.
+- Cache-busting atualizado para `?v=15`.

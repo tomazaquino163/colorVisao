@@ -17,8 +17,8 @@ const temaTexto = document.getElementById("temaTexto");
 
 const PLANO = [
   ...Array(4).fill("controle"),
-  ...Array(7).fill("vermelho-verde"),
-  ...Array(5).fill("azul-amarelo"),
+  ...Array(8).fill("vermelho-verde"),
+  ...Array(4).fill("azul-amarelo"),
   ...Array(4).fill("tons")
 ];
 
@@ -35,22 +35,59 @@ let animationId = null;
 let inicioQuestao = 0;
 
 const paletas = {
-  controle: {
-    fundo: ["#d5b56f", "#c9a46b", "#dfc17e", "#b99a64", "#d2ad73"],
-    figura: ["#496d70", "#557b78", "#3f6468", "#638582"]
-  },
-  "vermelho-verde": {
-    fundo: ["#668c58", "#72965f", "#5f8253", "#7b9b68", "#6b8f5c"],
-    figura: ["#b75f59", "#c26860", "#aa554f", "#bd6a61", "#a95b55"]
-  },
-  "azul-amarelo": {
-    fundo: ["#c5a95d", "#d0b66c", "#b99d55", "#d7bd72", "#c0a45c"],
-    figura: ["#587b93", "#63859c", "#4e718a", "#6b8ca0", "#55778e"]
-  },
-  tons: {
-    fundo: ["#b99c72", "#c0a47a", "#ad926c", "#c6aa80", "#b29770"],
-    figura: ["#8c796b", "#917e70", "#857367", "#998476", "#8a776a"]
-  }
+  controle: [
+    {
+      fundo: ["#d6b66f", "#c9a66c", "#dfc27d", "#bea06a", "#d1ad72"],
+      figura: ["#416f73", "#4b7979", "#38676d", "#5a8380"],
+      base: "#c9aa70"
+    }
+  ],
+
+  // Paletas experimentais pseudoisocromáticas:
+  // figura e fundo têm luminância visual aproximada para reduzir pistas de brilho.
+  "vermelho-verde": [
+    {
+      fundo: ["#788f63", "#82976c", "#70875d", "#879c70", "#758c61"],
+      figura: ["#a66f67", "#ad756c", "#9d6962", "#b07970", "#a36d66"],
+      base: "#7d9068"
+    },
+    {
+      fundo: ["#82906a", "#778861", "#8b9871", "#73835e", "#85936c"],
+      figura: ["#a87368", "#9f6b62", "#b07a6d", "#a26e65", "#aa7569"],
+      base: "#81906a"
+    },
+    {
+      fundo: ["#6f8660", "#7b8f68", "#748961", "#82966e", "#6b825c"],
+      figura: ["#9e6c65", "#a8736a", "#95645f", "#ac786e", "#a06d66"],
+      base: "#778a64"
+    },
+    {
+      fundo: ["#87936f", "#7c8b67", "#909a77", "#748461", "#83906b"],
+      figura: ["#aa766d", "#a16e67", "#b17d72", "#99665f", "#a87369"],
+      base: "#84906d"
+    }
+  ],
+
+  "azul-amarelo": [
+    {
+      fundo: ["#b9a76d", "#c0ad73", "#b19f68", "#c5b277", "#b6a36a"],
+      figura: ["#73899a", "#7c91a0", "#6b8194", "#8498a5", "#718797"],
+      base: "#b5a46d"
+    },
+    {
+      fundo: ["#b4a16a", "#bdab72", "#aa9864", "#c1ae75", "#b09e68"],
+      figura: ["#6f8495", "#788d9d", "#657c90", "#8094a3", "#6c8293"],
+      base: "#b19f69"
+    }
+  ],
+
+  tons: [
+    {
+      fundo: ["#b49c82", "#baa288", "#ad957c", "#c0a78c", "#b09880"],
+      figura: ["#9f8978", "#a58e7d", "#978274", "#aa9381", "#9b8576"],
+      base: "#af9780"
+    }
+  ]
 };
 
 function embaralhar(lista) {
@@ -104,6 +141,19 @@ function escolherCor(lista) {
   return lista[Math.floor(Math.random() * lista.length)];
 }
 
+function escolherPaleta(categoria) {
+  const variantes = paletas[categoria];
+  return variantes[Math.floor(Math.random() * variantes.length)];
+}
+
+// Aproxima a luminância relativa para evitar que o número seja revelado
+// apenas por diferença de brilho/contraste.
+function luminanciaHex(hex) {
+  const rgb = hex.replace("#", "").match(/.{2}/g).map(v => parseInt(v, 16) / 255);
+  const linear = rgb.map(c => c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+}
+
 function criarPonto(x, y, grupo, paleta, tamanhoMin, tamanhoMax) {
   pontos.push({
     baseX: x,
@@ -120,33 +170,46 @@ function criarPonto(x, y, grupo, paleta, tamanhoMin, tamanhoMax) {
 
 function gerarPontos(categoria) {
   pontos = [];
-  const paleta = paletas[categoria];
+  const paleta = escolherPaleta(categoria);
 
-  // Grade com jitter: cobre muito melhor a placa que pontos puramente aleatórios.
-  const passo = 13;
-  for (let y = 28; y < 472; y += passo) {
-    for (let x = 28; x < 472; x += passo) {
-      const jx = x + (Math.random() - 0.5) * 8;
-      const jy = y + (Math.random() - 0.5) * 8;
-      if (!dentroPlaca(jx, jy, 7)) continue;
+  // Grade mais fechada para impedir que a cor de base revele o desenho.
+  // Figura e fundo recebem a MESMA densidade de pontos.
+  const passo = categoria === "controle" ? 12 : 10.5;
+
+  for (let y = 24; y < 476; y += passo) {
+    for (let x = 24; x < 476; x += passo) {
+      const jitter = passo * 0.68;
+      const jx = x + (Math.random() - 0.5) * jitter;
+      const jy = y + (Math.random() - 0.5) * jitter;
+      if (!dentroPlaca(jx, jy, 5)) continue;
 
       const grupo = estaNaMascara(jx, jy) ? "figura" : "fundo";
-      criarPonto(jx, jy, grupo, paleta, 4.8, 7.2);
+      criarPonto(
+        jx, jy, grupo, paleta,
+        categoria === "controle" ? 4.6 : 4.3,
+        categoria === "controle" ? 7.0 : 6.6
+      );
     }
   }
 
-  // Reforço proposital dentro do número para deixar a silhueta contínua.
-  let adicionados = 0;
-  let tentativas = 0;
-  while (adicionados < 430 && tentativas < 12000) {
-    tentativas++;
-    const x = 90 + Math.random() * 320;
-    const y = 105 + Math.random() * 290;
-    if (dentroPlaca(x, y, 6) && estaNaMascara(x, y)) {
-      criarPonto(x, y, "figura", paleta, 3.8, 6.3);
-      adicionados++;
+  // Só as placas de controle recebem reforço da figura.
+  // Nas demais, reforçar o número cria uma pista de densidade que facilita demais.
+  if (categoria === "controle") {
+    let adicionados = 0;
+    let tentativas = 0;
+    while (adicionados < 260 && tentativas < 9000) {
+      tentativas++;
+      const x = 90 + Math.random() * 320;
+      const y = 105 + Math.random() * 290;
+      if (dentroPlaca(x, y, 6) && estaNaMascara(x, y)) {
+        criarPonto(x, y, "figura", paleta, 3.8, 6.0);
+        adicionados++;
+      }
     }
   }
+
+  // Guarda a cor neutra da placa para o desenho.
+  pontos.corBase = paleta.base;
 }
 
 function gerarQuestao() {
@@ -166,7 +229,7 @@ function desenharPlacaAnimada(tempo) {
   ctx.arc(250, 250, 239, 0, Math.PI * 2);
   ctx.clip();
 
-  ctx.fillStyle = "#d4b879";
+  ctx.fillStyle = pontos.corBase || "#b5a57d";
   ctx.fillRect(0, 0, 500, 500);
 
   for (const p of pontos) {
@@ -332,7 +395,7 @@ function gerarConclusao() {
   ];
 
   const mediaCromatica =
-    (vermelhoVerde * 7 + azulAmarelo * 5 + tons * 4) / 16;
+    (vermelhoVerde * 8 + azulAmarelo * 4 + tons * 4) / 16;
 
   const pior = [...grupos].sort((a, b) => a.valor - b.valor)[0];
 
