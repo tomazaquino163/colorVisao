@@ -18,10 +18,10 @@ const temaTexto = document.getElementById("temaTexto");
 const PLANO = [
   ...Array(4).fill("controle"),
   ...Array(6).fill("desaparecimento"),
-  ...Array(5).fill("transformacao"),
-  ...Array(4).fill("oculto"),
+  ...Array(8).fill("transformacao"),
+  ...Array(2).fill("oculto"),
   ...Array(3).fill("azul-amarelo"),
-  ...Array(3).fill("tons")
+  ...Array(2).fill("tons")
 ];
 
 const TOTAL_QUESTOES = PLANO.length;
@@ -241,30 +241,29 @@ function corParaPonto(categoria, x, y) {
   }
 
   if (categoria === "transformacao") {
-    // v20: refinamento das placas de transformação.
-    // Em vez de uma mistura totalmente aleatória, usamos a assinatura do ponto:
-    // 10 = região exclusiva do número típico
-    // 01 = região exclusiva do número alternativo
-    // 11 = intersecção entre os dois números
-    // 00 = fundo
-    //
-    // Isso deixa o número típico mais estável para visão comum,
-    // mas ainda preserva um canal alternativo experimental.
+    // v21: transformação mais forte, inspirada na ideia de dupla leitura.
+    // A placa continua experimental, mas o número típico foi privilegiado
+    // para visão comum, enquanto o número alternativo foi mantido em um
+    // canal cromático secundário mais organizado.
     const assinatura = `${dentroA ? 1 : 0}${dentroB ? 1 : 0}`;
 
+    // Região exclusiva do número típico.
     if (assinatura === "10") {
-      return Math.random() < 0.80 ? corDesaparecimento(q, true) : corOculta(q, false);
+      return Math.random() < 0.88 ? corDesaparecimento(q, true) : corOculta(q, false);
     }
 
+    // Região exclusiva do número alternativo.
     if (assinatura === "01") {
-      return Math.random() < 0.68 ? corOculta(q, true) : corDesaparecimento(q, false);
+      return Math.random() < 0.80 ? corOculta(q, true) : corDesaparecimento(q, false);
     }
 
+    // Intersecção: mistura equilibrada, mas ainda ligeiramente favorecendo o típico.
     if (assinatura === "11") {
-      return Math.random() < 0.56 ? corDesaparecimento(q, true) : corOculta(q, true);
+      return Math.random() < 0.58 ? corDesaparecimento(q, true) : corOculta(q, true);
     }
 
-    return Math.random() < 0.70 ? corDesaparecimento(q, false) : corOculta(q, false);
+    // Fundo.
+    return Math.random() < 0.78 ? corDesaparecimento(q, false) : corOculta(q, false);
   }
 
   if (categoria === "azul-amarelo") {
@@ -292,7 +291,7 @@ function gerarPontos(categoria) {
   // poderiam revelar o contorno do número por diferenças geométricas.
   const passo =
     categoria === "controle" ? 12 :
-    categoria === "transformacao" ? 8.8 :
+    categoria === "transformacao" ? 8.5 :
     categoria === "oculto" ? 9.1 : 10.2;
 
   for (let y = 22; y < 478; y += passo) {
@@ -583,8 +582,8 @@ function gerarConclusao() {
     };
   }
 
-  // 15 placas experimentais no eixo vermelho-verde.
-  if (indicadores >= 5) {
+  // 16 placas experimentais no eixo vermelho-verde.
+  if (indicadores >= 6) {
     return {
       classe: "status-vermelho",
       icone: "!",
@@ -594,7 +593,7 @@ function gerarConclusao() {
     };
   }
 
-  if (indicadores >= 2 || azul < 67 || tons < 67) {
+  if (indicadores >= 3 || azul < 67 || tons < 67) {
     return {
       classe: "status-amarelo",
       icone: "!",
@@ -622,13 +621,14 @@ function cardPadraoRG() {
   return `
     <div class="padrao-rg-v18">
       <span>ANÁLISE EXPERIMENTAL VERMELHO-VERDE</span>
-      <h4>${total} indicador(es) em 15 placas</h4>
+      <h4>${total} indicador(es) em 16 placas</h4>
       <p>
         Desaparecimento: <strong>${d.indicadores}/${d.total}</strong> •
         Transformação: <strong>${t.indicadores}/${t.total}</strong> •
         Número oculto: <strong>${o.indicadores}/${o.total}</strong>
       </p>
       <small>
+        Na v21, as placas de transformação são o foco principal do eixo vermelho-verde.
         Em “número oculto”, não identificar nenhum número conta como padrão típico experimental;
         identificar o número mascarado é registrado como indicador vermelho-verde.
       </small>

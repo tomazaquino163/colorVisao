@@ -1,4 +1,4 @@
-# ColorVisão v20
+# ColorVisão v21
 
 Projeto escolar educativo sobre percepção de cores, daltonismo e acessibilidade.
 
@@ -196,3 +196,19 @@ participantes com visão típica e participantes com deficiência de visão de c
 - Densidade das placas de transformação levemente aumentada.
 - Cor-base das placas de transformação agora mistura as bases dos dois canais.
 - Cache-busting atualizado para `?v=20`.
+
+## Novidades da v21 — foco em transformação
+
+- Nova distribuição do teste:
+  - 4 controle
+  - 6 desaparecimento
+  - 8 transformação
+  - 2 número oculto
+  - 3 azul-amarelo
+  - 2 tonalidades
+- A categoria **transformação** passou a ser o núcleo principal do eixo vermelho-verde.
+- O número típico ficou mais privilegiado nas regiões exclusivas dele.
+- O número alternativo experimental foi mantido, mas de forma mais organizada.
+- As placas ocultas foram reduzidas e passaram a ser categoria complementar.
+- Limiares de interpretação recalibrados para 16 placas vermelho-verde experimentais.
+- Cache-busting atualizado para `?v=21`.
